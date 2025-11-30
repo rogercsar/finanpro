@@ -14,7 +14,7 @@ import {
     Brain
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import clsx from 'clsx';
 
 export default function Layout() {
@@ -27,6 +27,18 @@ export default function Layout() {
         await signOut();
         navigate('/auth');
     };
+
+    // Prevent body scroll when mobile menu is open
+    useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+        return () => {
+            document.body.style.overflow = 'auto'; // Cleanup on component unmount
+        };
+    }, [isMobileMenuOpen]);
 
     const navItems = [
         { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -47,7 +59,7 @@ export default function Layout() {
                         <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
                             <Wallet className="w-6 h-6" />
                         </div>
-                        FinanPro
+                        FinanIA
                     </h1>
                     <div className="flex items-center gap-2">
                         <ThemeToggle />
@@ -109,7 +121,7 @@ export default function Layout() {
                 <div className="flex items-center gap-3">
                     <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2">
                         <Wallet className="w-6 h-6 text-blue-600" />
-                        FinanPro
+                        FinanIA
                     </h1>
                 </div>
                 <div className="flex items-center gap-2">

@@ -266,7 +266,7 @@ export function AIAdvisorProvider({ children, createAlert }) {
 
             default:
                 advice = {
-                    page: 'FinanPro',
+                    page: 'FinanIA',
                     title: 'Bem-vindo!',
                     message: 'Navegue pela plataforma e eu estarei aqui com dicas personalizadas para cada seção.',
                     icon: '👋'

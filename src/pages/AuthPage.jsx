@@ -59,7 +59,7 @@ export default function AuthPage() {
                     </div>
 
                     <h2 className="text-3xl font-bold text-center text-slate-800 mb-2">
-                        FinanPro
+                        FinanIA
                     </h2>
                     <p className="text-center text-slate-500 mb-8">
                         {isLogin ? 'Bem-vindo de volta!' : 'Crie sua conta para começar'}
