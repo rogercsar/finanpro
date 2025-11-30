@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAIAdvisor } from '../context/AIAdvisorContext';
 import { supabase } from '../lib/supabase';
 import { useSharedAccount } from '../hooks/useSharedAccount';
+import { useNotifications } from './useNotifications';
 import { User, Camera, Lock, Share2, Check, X, UserPlus } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -10,6 +11,7 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const { sharedAccounts, invitations, sendInvitation, acceptInvitation, rejectInvitation, removeSharedUser } = useSharedAccount();
   const { achievements, analysis } = useAIAdvisor();
+  const { permission, requestPermission } = useNotifications();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ full_name: '', phone: '', email: '', avatar_url: '' });
   const [preview, setPreview] = useState(null);
@@ -118,6 +120,18 @@ export default function ProfilePage() {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Meu Perfil</h2>
       </div>
+
+      {/* Notification Permission */}
+      {permission !== 'granted' && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-500/30 flex items-center justify-between">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  Ative as notificações para receber alertas importantes sobre suas finanças!
+              </p>
+              <button onClick={requestPermission} className="btn-primary bg-yellow-500 hover:bg-yellow-600 text-white text-sm">
+                  Ativar Notificações
+              </button>
+          </div>
+      )}
 
       <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 max-w-2xl">
         <div className="flex flex-col sm:flex-row gap-6 sm:items-start">

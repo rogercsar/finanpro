@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { useNotifications } from '../pages/useNotifications';
 
 const AlertsContext = createContext();
 
 export function AlertsProvider({ children }) {
+    const { showNotification } = useNotifications();
     const { user } = useAuth();
     const [alerts, setAlerts] = useState([]);
     const [budgets, setBudgets] = useState([]);
@@ -77,6 +79,11 @@ export function AlertsProvider({ children }) {
             
             if (error) throw error;
             setAlerts(prev => [newAlert, ...prev]);
+
+            // Show browser notification
+            showNotification(title, {
+                body: message,
+            });
             return newAlert;
         } catch (error) {
             console.error('Error creating alert:', error);

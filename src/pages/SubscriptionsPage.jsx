@@ -15,6 +15,8 @@ export default function SubscriptionsPage() {
         type: 'subscription',
         amount: '',
         payment_date: '',
+        total_amount: '',
+        interest_rate: '',
     });
 
     const fetchItems = async () => {
@@ -40,7 +42,7 @@ export default function SubscriptionsPage() {
     }, [user]);
 
     const resetForm = () => {
-        setForm({ name: '', type: 'subscription', amount: '', payment_date: '', last_paid_month: null });
+        setForm({ name: '', type: 'subscription', amount: '', payment_date: '', total_amount: '', interest_rate: '' });
         setEditingItem(null);
         setIsFormOpen(false);
     };
@@ -52,6 +54,8 @@ export default function SubscriptionsPage() {
             type: item.type,
             amount: item.amount,
             payment_date: item.payment_date,
+            total_amount: item.total_amount || '',
+            interest_rate: item.interest_rate || '',
         });
         setIsFormOpen(true);
     };
@@ -66,6 +70,8 @@ export default function SubscriptionsPage() {
                 type: form.type,
                 amount: parseFloat(form.amount),
                 payment_date: parseInt(form.payment_date),
+                total_amount: form.type === 'debt' ? parseFloat(form.total_amount) : null,
+                interest_rate: form.type === 'debt' ? parseFloat(form.interest_rate) : null,
             };
 
             if (editingItem?.id) {
@@ -166,10 +172,17 @@ export default function SubscriptionsPage() {
                                             {item.type === 'subscription' ? 'Assinatura' : 'Dívida'}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Vence todo dia {item.payment_date}</p>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-3">
+                                        <span>Vence dia {item.payment_date}</span>
+                                        {item.type === 'debt' && item.interest_rate && (
+                                            <span className="border-l border-slate-300 dark:border-slate-600 pl-3">
+                                                Juros: {item.interest_rate}% a.a.
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-4 w-full sm:w-auto">
-                                    <p className="font-bold text-lg text-slate-900 dark:text-slate-100">R$ {parseFloat(item.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                    <p className="font-bold text-lg text-slate-900 dark:text-slate-100">R$ {parseFloat(item.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} /mês</p>
                                     {isPaidThisMonth ? (
                                         <div className="flex items-center gap-1 text-green-600 text-sm font-semibold py-2 px-3 bg-green-100 rounded-lg">
                                             <Check className="w-4 h-4" />
@@ -214,6 +227,18 @@ export default function SubscriptionsPage() {
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Valor Mensal (R$)</label>
                                 <input type="number" step="0.01" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required className="w-full input-form dark:bg-slate-800 dark:border-slate-700" />
                             </div>
+                            {form.type === 'debt' && (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Valor Total da Dívida (R$)</label>
+                                        <input type="number" step="0.01" value={form.total_amount} onChange={e => setForm({...form, total_amount: e.target.value})} className="w-full input-form dark:bg-slate-800 dark:border-slate-700" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Taxa de Juros Anual (%)</label>
+                                        <input type="number" step="0.01" value={form.interest_rate} onChange={e => setForm({...form, interest_rate: e.target.value})} className="w-full input-form dark:bg-slate-800 dark:border-slate-700" />
+                                    </div>
+                                </>
+                            )}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Dia do Pagamento</label>
                                 <input type="number" min="1" max="31" value={form.payment_date} onChange={e => setForm({...form, payment_date: e.target.value})} required className="w-full input-form dark:bg-slate-800 dark:border-slate-700" />

@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS recurring_expenses (
     type recurring_expense_type NOT NULL,
     amount DECIMAL(12, 2) NOT NULL,
     payment_date INT, -- Dia do mês (1-31)
+    total_amount DECIMAL(12, 2), -- Valor total da dívida (opcional)
+    interest_rate DECIMAL(5, 2), -- Taxa de juros anual (opcional)
     status recurring_expense_status DEFAULT 'active',
     last_paid_month DATE, -- Armazena o primeiro dia do mês do último pagamento
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
