@@ -20,15 +20,17 @@ export default function SharedReportPage() {
             }
 
             try {
-                // Chame a Edge Function para buscar os dados de forma segura
-                const { data, error } = await supabase.functions.invoke('shared-report', {
-                    body: { token },
+                // Chama a função do banco de dados (RPC) para buscar os dados de forma segura
+                const { data, error } = await supabase.rpc('get_shared_report_data', {
+                    report_token: token,
                 });
 
                 if (error) throw error;
                 if (data.error) throw new Error(data.error);
 
                 const { transactions, month } = data;
+                if (!transactions) throw new Error("Dados não encontrados.");
+
                 const monthDate = parse(month, 'yyyy-MM', new Date());
                 
                 const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
@@ -46,7 +48,7 @@ export default function SharedReportPage() {
                     balance: totalIncome - totalExpense,
                     pieData: Object.entries(expenseByCategory).map(([name, value]) => ({ name, value }))
                 });
-                
+
             } catch (err) {
                 setError(err.message);
             } finally {
