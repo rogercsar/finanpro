@@ -102,9 +102,9 @@ export default function ReportsPage() {
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center">
                     <h3 className="font-semibold text-slate-700 mb-4">Despesas por Categoria</h3>
-                    <div className="h-64">
+                    <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} labelLine={false}>
@@ -126,9 +126,9 @@ export default function ReportsPage() {
                     </div>
                 </div>
 
-                <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center">
                     <h3 className="font-semibold text-slate-700 mb-4">Entradas vs. Saídas</h3>
-                    <div className="h-72">
+                    <div className="h-72 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={balanceData} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
                                 <XAxis type="number" hide />
@@ -160,42 +160,51 @@ export default function ReportsPage() {
                         }}>Exportar CSV</button>
                     </div>
                 </div>
-                <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 border-b border-slate-200">
-                        <tr>
-                            <th className="px-6 py-3 font-semibold text-slate-700">Data</th>
-                            <th className="px-6 py-3 font-semibold text-slate-700">Tipo</th>
-                            <th className="px-6 py-3 font-semibold text-slate-700">Categoria</th>
-                            <th className="px-6 py-3 font-semibold text-slate-700">Descrição</th>
-                            <th className="px-6 py-3 font-semibold text-slate-700 text-right">Valor</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {loading ? (
-                            <tr><td colSpan="5" className="text-center p-8 text-slate-500">Carregando...</td></tr>
-                        ) : transactions.length === 0 ? (
-                            <tr><td colSpan="5" className="text-center p-8 text-slate-500">Nenhuma transação neste mês.</td></tr>
-                        ) : (
-                            transactions.map((t) => (
+                {/* Desktop Table */}
+                <div className="hidden md:block">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50 border-b border-slate-200">
+                            <tr>
+                                <th className="px-6 py-3 font-semibold text-slate-700">Data</th>
+                                <th className="px-6 py-3 font-semibold text-slate-700">Tipo</th>
+                                <th className="px-6 py-3 font-semibold text-slate-700">Categoria</th>
+                                <th className="px-6 py-3 font-semibold text-slate-700">Descrição</th>
+                                <th className="px-6 py-3 font-semibold text-slate-700 text-right">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {transactions.map((t) => (
                                 <tr key={t.id} className="hover:bg-slate-50">
                                     <td className="px-6 py-3 text-slate-600">{format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}</td>
-                                    <td className="px-6 py-3">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                            }`}>
-                                            {t.type === 'income' ? 'Entrada' : 'Saída'}
-                                        </span>
-                                    </td>
+                                    <td className="px-6 py-3"><span className={`px-2 py-1 rounded-full text-xs font-medium ${t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.type === 'income' ? 'Entrada' : 'Saída'}</span></td>
                                     <td className="px-6 py-3 text-slate-600">{t.category}</td>
-                                    <td className="px-6 py-3 text-slate-600">{t.description}</td>
-                                    <td className={`px-6 py-3 text-right font-medium ${t.type === 'income' ? 'text-green-600' : 'text-red-600'
-                                        }`}>
-                                        R$ {Number(t.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                    </td>
+                                    <td className="px-6 py-3 text-slate-600">{t.description || '-'}</td>
+                                    <td className={`px-6 py-3 text-right font-medium ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>R$ {Number(t.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                {/* Mobile Cards */}
+                <div className="md:hidden divide-y divide-slate-100">
+                    {transactions.map((t) => (
+                        <div key={t.id} className="p-4">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="font-semibold text-slate-800">{t.description || t.category}</p>
+                                    <p className="text-sm text-slate-500">{format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}</p>
+                                </div>
+                                <p className={`font-bold text-lg ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            </div>
+                            <div className="flex justify-between items-center mt-2">
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.category}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                {/* Loading and Empty States */}
+                {loading && <div className="text-center p-8 text-slate-500">Carregando...</div>}
+                {!loading && transactions.length === 0 && <div className="text-center p-8 text-slate-500">Nenhuma transação neste mês.</div>}
             </div>
         </div>
     );

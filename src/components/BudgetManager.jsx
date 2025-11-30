@@ -41,11 +41,11 @@ export default function BudgetManager({ budgets = [] }) {
             {/* Add new budget */}
             <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
                 <p className="text-sm font-medium text-slate-700 mb-2">Adicionar novo limite</p>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                     <select
                         value={newCategory}
                         onChange={(e) => setNewCategory(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900"
+                        className="sm:flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900"
                     >
                         <option value="">Selecione categoria</option>
                         {categories.map(cat => (
@@ -58,12 +58,12 @@ export default function BudgetManager({ budgets = [] }) {
                         placeholder="Limite (R$)"
                         value={newLimit}
                         onChange={(e) => setNewLimit(e.target.value)}
-                        className="w-28 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400"
+                        className="sm:w-28 px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-900 placeholder-slate-400"
                     />
                     <button
                         onClick={handleAddBudget}
                         disabled={loading}
-                        className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+                        className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-1"
                     >
                         <Plus className="w-4 h-4" />
                         Adicionar
