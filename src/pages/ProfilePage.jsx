@@ -116,16 +116,16 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-800">Meu Perfil</h2>
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Meu Perfil</h2>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 max-w-2xl">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 max-w-2xl">
         <div className="flex flex-col sm:flex-row gap-6 sm:items-start">
           <div className="flex-shrink-0 mx-auto sm:mx-0">
             <span title={getHealthBorderTooltip()}>
               <div
                 className={clsx(
-                  "w-28 h-28 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden ring-4 ring-offset-4 ring-offset-white transition-colors duration-500",
+                  "w-28 h-28 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden ring-4 ring-offset-4 ring-offset-white dark:ring-offset-slate-900 transition-colors duration-500",
                   getHealthBorderColor()
                 )}
               >
@@ -139,7 +139,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="flex-1 w-full">
-            <label className="block text-sm text-slate-600 mb-2">Foto de perfil</label>
+            <label className="block text-sm text-slate-600 dark:text-slate-400 mb-2">Foto de perfil</label>
             <div className="flex items-center gap-3">
               <label className="btn-ghost flex items-center gap-2">
                 <Camera className="w-4 h-4" />
@@ -151,42 +151,42 @@ export default function ProfilePage() {
 
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
-                className="px-3 py-2 border border-slate-200 rounded-lg text-slate-900"
+                className="input-form dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
                 placeholder="Nome completo"
                 value={form.full_name}
                 onChange={(e) => setForm(f => ({ ...f, full_name: e.target.value }))}
               />
               <input
-                className="px-3 py-2 border border-slate-200 rounded-lg text-slate-900"
+                className="input-form dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
                 placeholder="Telefone"
                 value={form.phone}
                 onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
               />
               <input
-                className="px-3 py-2 border border-slate-200 rounded-lg md:col-span-2 text-slate-900"
+                className="input-form dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 md:col-span-2"
                 placeholder="Email"
                 value={form.email}
                 onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
               />
             </div>
 
-            <div className="mt-4 flex gap-3">
+            <div className="mt-6 flex gap-3">
               <button onClick={handleSave} className="btn-primary">{loading ? 'Salvando...' : 'Salvar alterações'}</button>
             </div>
 
-            <div className="mt-6 border-t border-slate-100 pt-4">
-              <h4 className="text-sm font-semibold text-slate-700 mb-2">Alterar senha</h4>
+            <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-6">
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Alterar senha</h4>
               <div className="flex flex-col sm:flex-row gap-3 items-center">
-                <input type="password" placeholder="Nova senha" className="px-3 py-2 border border-slate-200 rounded-lg flex-1 text-slate-900" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                <input type="password" placeholder="Nova senha" className="input-form dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 flex-1" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                 <button onClick={handleChangePassword} className="btn-primary"><Lock className="w-4 h-4 mr-2" /> Alterar</button>
               </div>
             </div>
 
-            <div className="mt-6 border-t border-slate-100 pt-4">
-              <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+            <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-6">
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
                 <Share2 className="w-4 h-4" /> Compartilhar Conta
               </h4>
-              <p className="text-xs text-slate-600 mb-3">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
                 Convide outro usuário para acessar e gerenciar esta conta. O usuário convidado verá o convite
                 aqui na tela de Perfil ao fazer login com o e-mail informado.
               </p>
@@ -196,14 +196,14 @@ export default function ProfilePage() {
                   <UserPlus className="w-4 h-4" /> Convidar Usuário
                 </button>
               ) : (
-                <form onSubmit={handleSendInvite} className="mb-4 p-3 bg-slate-50 rounded-lg animate-in fade-in duration-300">
+                <form onSubmit={handleSendInvite} className="mb-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg animate-in fade-in duration-300">
                   <div className="flex gap-2">
                     <input
                       type="email"
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
                       placeholder="Email do usuário"
-                      className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-slate-900"
+                      className="input-form dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 flex-1"
                     />
                     <button type="submit" className="btn-primary" disabled={loading}>
                       {loading ? 'Enviando...' : 'Enviar'}
@@ -221,14 +221,14 @@ export default function ProfilePage() {
 
               {/* Pending Invitations */}
               {sharedAccounts.filter(a => a.status === 'pending' && a.owner_id === user?.id).length > 0 && (
-                <div className="mb-4">
-                  <h5 className="text-xs font-semibold text-slate-600 mb-2">Convites Pendentes</h5>
+                <div className="mb-4"> 
+                  <h5 className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">Convites Pendentes</h5>
                   <div className="space-y-2">
                     {sharedAccounts
                       .filter(a => a.status === 'pending' && a.owner_id === user?.id)
                       .map(invite => (
-                        <div key={invite.id} className="flex items-center justify-between p-2 bg-yellow-50 border border-yellow-100 rounded-lg">
-                          <span className="text-sm text-slate-700">{invite.invite_email}</span>
+                        <div key={invite.id} className="flex items-center justify-between p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-500/20 rounded-lg">
+                          <span className="text-sm text-slate-700 dark:text-slate-300">{invite.invite_email}</span>
                           <button
                             onClick={() => removeSharedUser(invite.id)}
                             className="text-red-600 hover:text-red-700 text-xs"
@@ -243,18 +243,18 @@ export default function ProfilePage() {
 
               {/* Accepted Shared Users */}
               {sharedAccounts.filter(a => a.status === 'accepted').length > 0 && (
-                <div className="mb-4">
-                  <h5 className="text-xs font-semibold text-slate-600 mb-2">Usuários com Acesso</h5>
+                <div className="mb-4"> 
+                  <h5 className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">Usuários com Acesso</h5>
                   <div className="space-y-2">
                     {sharedAccounts
                       .filter(a => a.status === 'accepted')
                       .map(shared => {
                         const sharedUserEmail = shared.owner_id === user?.id ? shared.invite_email : user?.email;
                         return (
-                        <div key={shared.id} className="flex items-center justify-between p-2 bg-green-50 border border-green-100 rounded-lg">
+                        <div key={shared.id} className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-500/20 rounded-lg">
                           <div>
-                            <p className="text-sm font-medium text-slate-900">{sharedUserEmail}</p>
-                            <p className="text-xs text-slate-500">Acesso desde {new Date(shared.accepted_at).toLocaleDateString('pt-BR')}</p>
+                            <p className="text-sm font-medium text-slate-900 dark:text-slate-200">{sharedUserEmail}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">Acesso desde {new Date(shared.accepted_at).toLocaleDateString('pt-BR')}</p>
                           </div>
                           {shared.owner_id === user?.id && (
                             <button
@@ -273,14 +273,14 @@ export default function ProfilePage() {
 
               {/* Incoming Invitations */}
               {invitations.length > 0 && (
-                <div>
-                  <h5 className="text-xs font-semibold text-slate-600 mb-2">Convites Recebidos</h5>
+                <div> 
+                  <h5 className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">Convites Recebidos</h5>
                   <div className="space-y-2">
                     {invitations.map(invite => (
-                      <div key={invite.id} className="flex items-center justify-between p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                      <div key={invite.id} className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-500/20 rounded-lg">
                         <div className="text-sm">
-                          <p className="font-medium text-slate-900">Você foi convidado para compartilhar uma conta</p>
-                          <p className="text-xs text-slate-600">Convite de outro usuário</p>
+                          <p className="font-medium text-slate-900 dark:text-slate-200">Você foi convidado para compartilhar uma conta</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400">Convite de outro usuário</p>
                         </div>
                         <div className="flex gap-2">
                           <button
@@ -307,19 +307,19 @@ export default function ProfilePage() {
       </div>
 
       {/* Achievements Section */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 max-w-2xl">
-        <h3 className="text-lg font-bold text-slate-800 mb-4">🏆 Conquistas</h3>
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 max-w-2xl">
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">🏆 Conquistas</h3>
         {achievements && achievements.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {achievements.map(ach => (
-              <div key={ach.id} className="flex flex-col items-center text-center p-3 bg-slate-50 rounded-lg border border-slate-200" title={`${ach.name}: ${ach.description}`}>
+              <div key={ach.id} className="flex flex-col items-center text-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700" title={`${ach.name}: ${ach.description}`}>
                 <div className="text-4xl mb-2">{ach.icon || '🏅'}</div>
-                <p className="text-xs font-semibold text-slate-700 leading-tight">{ach.name}</p>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 leading-tight">{ach.name}</p>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-slate-500">
+          <div className="text-center py-8 text-slate-500 dark:text-slate-400">
             <p>Continue usando o FinanIA para desbloquear novas conquistas!</p>
           </div>
         )}

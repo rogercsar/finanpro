@@ -144,8 +144,8 @@ export default function GoalsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 text-center sm:text-left">Minhas Metas</h2>
-          <p className="text-slate-500 text-sm mt-1 text-center sm:text-left">Defina objetivos financeiros e acompanhe o progresso</p>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 text-center sm:text-left">Minhas Metas</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 text-center sm:text-left">Defina objetivos financeiros e acompanhe o progresso</p>
         </div>
         <button
           onClick={() => {
@@ -162,9 +162,9 @@ export default function GoalsPage() {
       {/* Goals Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
-          <div className="col-span-full text-center text-slate-500 py-12">Carregando...</div>
+          <div className="col-span-full text-center text-slate-500 dark:text-slate-400 py-12">Carregando...</div>
         ) : goals.length === 0 ? (
-          <div className="col-span-full text-center text-slate-500 py-12">
+          <div className="col-span-full text-center text-slate-500 dark:text-slate-400 py-12">
             <Target className="w-12 h-12 mx-auto mb-4 opacity-40" />
             <p>Nenhuma meta criada ainda. Comece a criar suas metas financeiras!</p>
           </div>
@@ -178,31 +178,31 @@ export default function GoalsPage() {
             return (
               <div
                 key={goal.id}
-                className={`bg-white p-6 rounded-xl shadow-sm border transition-all ${
+                className={`bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border transition-all ${
                   isCompleted
-                    ? 'border-green-200 bg-green-50'
+                    ? 'border-green-200 dark:border-green-500/30 bg-green-50 dark:bg-green-900/20'
                     : isExpired
-                    ? 'border-red-200 bg-red-50'
-                    : 'border-slate-200'
+                    ? 'border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-900/20'
+                    : 'border-slate-200 dark:border-slate-800'
                 }`}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
-                    <h3 className="font-bold text-slate-900">{goal.name}</h3>
+                    <h3 className="font-bold text-slate-900 dark:text-slate-200">{goal.name}</h3>
                     {goal.description && (
-                      <p className="text-sm text-slate-600 mt-1">{goal.description}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{goal.description}</p>
                     )}
                   </div>
                   <div className="flex gap-2 ml-2">
                     <button
                       onClick={() => handleEdit(goal)}
-                      className="p-2 text-slate-400 hover:text-blue-600 transition-colors"
+                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(goal.id)}
-                      className="p-2 text-slate-400 hover:text-red-600 transition-colors"
+                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -212,10 +212,10 @@ export default function GoalsPage() {
                 {/* Progress Bar */}
                 <div className="mb-4">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-slate-600">Progresso</span>
-                    <span className="text-sm font-semibold text-slate-900">{Math.round(progress)}%</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-400">Progresso</span>
+                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-200">{Math.round(progress)}%</span>
                   </div>
-                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all ${
                         isCompleted
@@ -232,35 +232,35 @@ export default function GoalsPage() {
                 {/* Amount Info */}
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Atual</span>
-                    <span className="font-semibold text-slate-900">
+                    <span className="text-slate-600 dark:text-slate-400">Atual</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-200">
                       R$ {goal.current_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Alvo</span>
-                    <span className="font-semibold text-slate-900">
+                    <span className="text-slate-600 dark:text-slate-400">Alvo</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-200">
                       R$ {goal.target_amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Restante</span>
-                    <span className="font-semibold text-slate-900">
+                    <span className="text-slate-600 dark:text-slate-400">Restante</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-200">
                       R$ {Math.max(0, goal.target_amount - goal.current_amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 </div>
 
                 {/* Deadline */}
-                <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                  <span className="text-sm text-slate-600">
+                <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">
                     {daysLeft < 0
                       ? isCompleted
                         ? '✓ Concluída'
                         : '⚠ Vencida'
                       : `${daysLeft} dias`}
                   </span>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-500 dark:text-slate-500">
                     {format(new Date(`${goal.deadline}T00:00:00`), 'dd/MM/yyyy')}
                   </span>
                 </div>
@@ -280,14 +280,14 @@ export default function GoalsPage() {
       {/* Form Modal */}
       {isFormOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="flex justify-between items-center p-4 border-b border-slate-100">
-              <h3 className="text-lg font-semibold text-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">
                 {editingGoal ? 'Editar Meta' : 'Nova Meta'}
               </h3>
               <button
                 onClick={resetForm}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
               >
                 ✕
               </button>
@@ -295,61 +295,61 @@ export default function GoalsPage() {
 
             <form onSubmit={handleSave} className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Nome da Meta *</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome da Meta *</label>
                 <input
                   type="text"
                   required
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
                   placeholder="Ex: Fundo de Emergência"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Descrição</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Descrição</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
                   placeholder="Descrição opcional"
                   rows={2}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Valor Alvo *</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Valor Alvo *</label>
                 <input
                   type="number"
                   step="0.01"
                   required
                   value={form.target_amount}
                   onChange={(e) => setForm({ ...form, target_amount: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
                   placeholder="0,00"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Valor Atual</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Valor Atual</label>
                 <input
                   type="number"
                   step="0.01"
                   value={form.current_amount}
                   onChange={(e) => setForm({ ...form, current_amount: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
                   placeholder="0,00"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Prazo (Data Limite) *</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Prazo (Data Limite) *</label>
                 <input
                   type="date"
                   required
                   value={form.deadline}
                   onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900"
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
                 />
               </div>
 

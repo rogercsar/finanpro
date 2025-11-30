@@ -95,8 +95,8 @@ export default function FinancialAdvisorPage() {
             <div className="flex items-center gap-3 mb-8">
                 <Brain className="w-8 h-8 text-blue-600" />
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Assistente Financeira</h1>
-                    <p className="text-slate-600 text-sm mt-1">Análise inteligente de seus padrões financeiros e recomendações personalizadas</p>
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Assistente Financeira</h1>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">Análise inteligente de seus padrões financeiros e recomendações personalizadas</p>
                 </div>
             </div>
 
@@ -121,14 +121,14 @@ export default function FinancialAdvisorPage() {
             </div>
 
             {/* Insights */}
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-                <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-slate-100 dark:border-slate-800">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-200 mb-4 flex items-center gap-2">
                     <Lightbulb className="w-5 h-5 text-amber-500" />
                     Insights
                 </h2>
                 <div className="space-y-3">
                     {analysis.insights.map((insight, idx) => (
-                        <div key={idx} className="p-3 bg-slate-50 rounded-lg text-slate-700 text-sm">
+                        <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-slate-700 dark:text-slate-300 text-sm">
                             {insight}
                         </div>
                     ))}
@@ -246,14 +246,14 @@ export default function FinancialAdvisorPage() {
                     expanded={expandedSections.forecast}
                     onToggle={toggleSection}
                 >
-                    <div className="space-y-3">
+                    <div className="space-y-3"> 
                         {Object.entries(analysis.forecastMonthly)
                             .filter(([key]) => key !== 'total')
                             .sort(([,a], [,b]) => b - a)
                             .map(([category, amount]) => (
-                                <div key={category} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                    <span className="text-slate-700 font-medium">{category}</span>
-                                    <span className="text-slate-900 font-bold">R$ {amount.toFixed(2)}</span>
+                                <div key={category} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                                    <span className="text-slate-700 dark:text-slate-300 font-medium">{category}</span>
+                                    <span className="text-slate-900 dark:text-slate-200 font-bold">R$ {amount.toFixed(2)}</span>
                                 </div>
                             ))}
                         <div className="border-t pt-3 mt-3 flex justify-between items-center font-bold">
@@ -283,8 +283,8 @@ export default function FinancialAdvisorPage() {
             )}
 
             {/* Action Button */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-                <p className="text-slate-700 mb-4">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-xl p-6 border border-blue-100 dark:border-blue-800/50">
+                <p className="text-slate-700 dark:text-slate-300 mb-4">
                     💡 Dica: Revise suas metas financeiras baseado nessas análises e recomendações para otimizar seus gastos!
                 </p>
                 <button onClick={fetchData} className="btn-primary bg-blue-600 hover:bg-blue-700">
@@ -299,15 +299,15 @@ export default function FinancialAdvisorPage() {
  * Card de seção retrátil
  */
 function SectionCard({ title, icon, section, expanded, onToggle, children, badgeCount, badgeColor = "blue" }) {
-    return (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+    return ( 
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
             <button
                 onClick={() => onToggle(section)}
-                className="w-full p-6 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                className="w-full p-6 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
             >
                 <div className="flex items-center gap-3">
                     <span className={`text-${badgeColor}-600`}>{icon}</span>
-                    <h2 className="font-bold text-slate-900">{title}</h2>
+                    <h2 className="font-bold text-slate-900 dark:text-slate-200">{title}</h2>
                     {badgeCount !== undefined && (
                         <span className={`bg-${badgeColor}-100 text-${badgeColor}-700 px-2 py-1 rounded text-xs font-semibold`}>
                             {badgeCount}
@@ -315,9 +315,9 @@ function SectionCard({ title, icon, section, expanded, onToggle, children, badge
                     )}
                 </div>
                 {expanded ? (
-                    <ChevronUp className="w-5 h-5 text-slate-400" />
+                    <ChevronUp className="w-5 h-5 text-slate-400 dark:text-slate-500" />
                 ) : (
-                    <ChevronDown className="w-5 h-5 text-slate-400" />
+                    <ChevronDown className="w-5 h-5 text-slate-400 dark:text-slate-500" />
                 )}
             </button>
             {expanded && (

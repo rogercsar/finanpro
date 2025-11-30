@@ -49,24 +49,24 @@ export default function AuthPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border dark:border-slate-700">
                 <div className="p-8">
                     <div className="flex justify-center mb-6">
-                        <div className="bg-primary/10 p-3 rounded-full">
+                        <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-full">
                             <Wallet className="w-8 h-8 text-primary" />
                         </div>
                     </div>
 
-                    <h2 className="text-3xl font-bold text-center text-slate-800 mb-2">
+                    <h2 className="text-3xl font-bold text-center text-slate-800 dark:text-slate-100 mb-2">
                         FinanIA
                     </h2>
-                    <p className="text-center text-slate-500 mb-8">
+                    <p className="text-center text-slate-500 dark:text-slate-400 mb-8">
                         {isLogin ? 'Bem-vindo de volta!' : 'Crie sua conta para começar'}
                     </p>
 
                     {error && (
-                        <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-6 text-sm">
+                        <div className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 p-3 rounded-lg mb-6 text-sm">
                             {error}
                         </div>
                     )}
@@ -74,38 +74,38 @@ export default function AuthPage() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {!isLogin && (
                             <div className="relative">
-                                <User className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                                <User className="absolute left-3 top-3 w-5 h-5 text-slate-400 dark:text-slate-500" />
                                 <input
                                     type="text"
                                     placeholder="Nome Completo"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-slate-900"
+                                    className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-600 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-slate-900 dark:text-slate-200"
                                     required
                                 />
                             </div>
                         )}
 
                         <div className="relative">
-                            <Mail className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                            <Mail className="absolute left-3 top-3 w-5 h-5 text-slate-400 dark:text-slate-500" />
                             <input
                                 type="email"
                                 placeholder="Email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-slate-900"
+                                className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-600 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-slate-900 dark:text-slate-200"
                                 required
                             />
                         </div>
 
                         <div className="relative">
-                            <Lock className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                            <Lock className="absolute left-3 top-3 w-5 h-5 text-slate-400 dark:text-slate-500" />
                             <input
                                 type="password"
                                 placeholder="Senha"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-slate-900"
+                                className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-600 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-slate-900 dark:text-slate-200"
                                 required
                             />
                         </div>
@@ -122,7 +122,7 @@ export default function AuthPage() {
                     <div className="mt-6 text-center">
                         <button
                             onClick={() => setIsLogin(!isLogin)}
-                            className="text-sm text-primary hover:underline"
+                            className="text-sm text-primary hover:underline dark:text-blue-400"
                         >
                             {isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Entre'}
                         </button>

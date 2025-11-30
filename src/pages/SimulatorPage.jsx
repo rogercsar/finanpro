@@ -64,18 +64,18 @@ export default function SimulatorPage() {
             <div className="flex items-center gap-3">
                 <Calculator className="w-8 h-8 text-blue-600" />
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Simulador Financeiro</h1>
-                    <p className="text-slate-600 text-sm mt-1">Planeje seu futuro e entenda o impacto de suas decisões.</p>
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">Simulador Financeiro</h1>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">Planeje seu futuro e entenda o impacto de suas decisões.</p>
                 </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
                 <div className="mb-4">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Selecione o tipo de simulação:</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Selecione o tipo de simulação:</label>
                     <select
                         value={simulationType}
                         onChange={(e) => { setSimulationType(e.target.value); setResult(null); }}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900"
+                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
                     >
                         <option value="timeToGoal">Tempo para Atingir uma Meta</option>
                         <option value="recurringImpact">Impacto de Gasto/Renda Recorrente</option>
@@ -86,26 +86,26 @@ export default function SimulatorPage() {
                     {simulationType === 'timeToGoal' ? (
                         <>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Valor da Meta (R$)</label>
-                                <input type="number" name="targetAmount" value={inputs.targetAmount} onChange={handleInputChange} className="w-full input-form" placeholder="Ex: 50000" />
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Valor da Meta (R$)</label>
+                                <input type="number" name="targetAmount" value={inputs.targetAmount} onChange={handleInputChange} className="w-full input-form dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200" placeholder="Ex: 50000" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Quanto você pode guardar por mês? (R$)</label>
-                                <input type="number" name="monthlySaving" value={inputs.monthlySaving} onChange={handleInputChange} className="w-full input-form" placeholder="Ex: 800" />
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Quanto você pode guardar por mês? (R$)</label>
+                                <input type="number" name="monthlySaving" value={inputs.monthlySaving} onChange={handleInputChange} className="w-full input-form dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200" placeholder="Ex: 800" />
                             </div>
                         </>
                     ) : (
                         <>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Tipo de Mudança</label>
-                                <select name="changeType" value={inputs.changeType} onChange={handleInputChange} className="w-full input-form">
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tipo de Mudança</label>
+                                <select name="changeType" value={inputs.changeType} onChange={handleInputChange} className="w-full input-form dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">
                                     <option value="expense">Nova Despesa Mensal</option>
                                     <option value="income">Nova Renda Mensal</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Valor Mensal (R$)</label>
-                                <input type="number" name="changeAmount" value={inputs.changeAmount} onChange={handleInputChange} className="w-full input-form" placeholder="Ex: 300" />
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Valor Mensal (R$)</label>
+                                <input type="number" name="changeAmount" value={inputs.changeAmount} onChange={handleInputChange} className="w-full input-form dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200" placeholder="Ex: 300" />
                             </div>
                         </>
                     )}
@@ -117,12 +117,12 @@ export default function SimulatorPage() {
             </div>
 
             {result && (
-                <div className="bg-blue-50 p-6 rounded-xl border border-blue-200 animate-in fade-in duration-500">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">Resultado da Simulação</h3>
+                <div className="bg-blue-50 dark:bg-slate-800/50 p-6 rounded-xl border border-blue-200 dark:border-blue-500/20 animate-in fade-in duration-500">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Resultado da Simulação</h3>
                     {result.type === 'timeToGoal' && (
                         <div className="text-center">
                             <Clock className="w-12 h-12 mx-auto text-blue-600 mb-2" />
-                            <p className="text-slate-700">Para atingir sua meta de <span className="font-bold">R$ {result.targetAmount.toLocaleString('pt-BR')}</span>, você levará aproximadamente:</p>
+                            <p className="text-slate-700 dark:text-slate-300">Para atingir sua meta de <span className="font-bold">R$ {result.targetAmount.toLocaleString('pt-BR')}</span>, você levará aproximadamente:</p>
                             <p className="text-3xl font-bold text-blue-600 mt-2">
                                 {result.years > 0 && `${result.years} ano(s) e `}
                                 {result.months} mes(es)
@@ -130,18 +130,18 @@ export default function SimulatorPage() {
                         </div>
                     )}
                     {result.type === 'recurringImpact' && (
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center p-3 bg-white rounded-lg">
-                                <p className="text-slate-600">Saldo mensal atual:</p>
-                                <p className="font-bold text-slate-800">R$ {result.currentMonthlyBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                        <div className="space-y-4"> 
+                            <div className="flex justify-between items-center p-3 bg-white dark:bg-slate-800 rounded-lg">
+                                <p className="text-slate-600 dark:text-slate-400">Saldo mensal atual:</p>
+                                <p className="font-bold text-slate-800 dark:text-slate-200">R$ {result.currentMonthlyBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                             </div>
-                            <div className={`flex justify-between items-center p-3 rounded-lg ${result.change > 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+                            <div className={`flex justify-between items-center p-3 rounded-lg ${result.change > 0 ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
                                 <p className={`font-medium ${result.change > 0 ? 'text-green-800' : 'text-red-800'}`}>Novo saldo mensal:</p>
                                 <p className={`font-bold text-xl ${result.change > 0 ? 'text-green-700' : 'text-red-700'}`}>R$ {result.newMonthlyBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                             </div>
                             <div className="text-center pt-4">
                                 {result.change > 0 ? <TrendingUp className="w-10 h-10 mx-auto text-green-600 mb-2" /> : <TrendingDown className="w-10 h-10 mx-auto text-red-600 mb-2" />}
-                                <p className="text-slate-700">Impacto anual no seu poder de poupança:</p>
+                                <p className="text-slate-700 dark:text-slate-300">Impacto anual no seu poder de poupança:</p>
                                 <p className={`text-2xl font-bold ${result.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
                                     {result.change > 0 ? '+' : '-'} R$ {Math.abs(result.annualImpact).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                 </p>

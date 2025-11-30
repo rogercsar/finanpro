@@ -95,8 +95,8 @@ export default function TransactionList({ type }) {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                <h2 className="text-2xl font-bold text-slate-800 text-center sm:text-left">
+            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4"> 
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 text-center sm:text-left">
                     {type === 'income' ? 'Entradas' : 'Saídas'}
                 </h2>
                 <button
@@ -112,21 +112,21 @@ export default function TransactionList({ type }) {
             </div>
 
             <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-500" />
                 <input
                     type="text"
                     placeholder="Buscar por descrição..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-slate-900"
+                    className="w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-slate-900 dark:text-slate-200"
                 />
             </div>
 
             {/* CSV Importer Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
                 <button
                     onClick={() => setShowImporter(!showImporter)}
-                    className="w-full p-3 flex justify-between items-center text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    className="w-full p-3 flex justify-between items-center text-left text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                     <span className="flex items-center gap-2">
                         <FileText className="w-4 h-4" />
@@ -134,35 +134,35 @@ export default function TransactionList({ type }) {
                     </span>
                     <span>{showImporter ? 'Fechar' : 'Abrir'}</span>
                 </button>
-                {showImporter && (
-                    <div className="p-4 border-t border-slate-100">
+                {showImporter && ( 
+                    <div className="p-4 border-t border-slate-100 dark:border-slate-800">
                         <FileImporter onImportSuccess={fetchTransactions} />
                     </div>
                 )}
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
                 {/* Desktop Table */}
                 <div className="hidden md:block">
                     <table className="w-full text-left text-sm ">
-                        <thead className="bg-slate-50 border-b border-slate-200">
+                        <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                             <tr>
-                                <th className="px-6 py-4 font-semibold text-slate-700">Data</th>
-                                <th className="px-6 py-4 font-semibold text-slate-700">Descrição</th>
-                                <th className="px-6 py-4 font-semibold text-slate-700">Categoria</th>
-                                <th className="px-6 py-4 font-semibold text-slate-700 text-right">Valor</th>
-                                <th className="px-6 py-4 font-semibold text-slate-700 text-right">Ações</th>
+                                <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Data</th>
+                                <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Descrição</th>
+                                <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300">Categoria</th>
+                                <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Valor</th>
+                                <th className="px-6 py-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Ações</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {transactions.map((t) => (
-                                <tr key={t.id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-6 py-4 text-slate-600">
+                                <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                                         {format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}
                                     </td>
-                                    <td className="px-6 py-4 text-slate-900 font-medium">{t.description || '-'}</td>
+                                    <td className="px-6 py-4 text-slate-900 dark:text-slate-200 font-medium">{t.description || '-'}</td>
                                     <td className="px-6 py-4">
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
                                             {t.category}
                                         </span>
                                     </td>
@@ -170,9 +170,9 @@ export default function TransactionList({ type }) {
                                         R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <button onClick={() => { setEditingTransaction(t); setIsFormOpen(true); }} className="p-1 text-slate-400 hover:text-blue-600 transition-colors"><Pencil className="w-4 h-4" /></button>
-                                            <button onClick={() => handleDelete(t.id)} className="p-1 text-slate-400 hover:text-red-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                        <div className="flex justify-end gap-2"> 
+                                            <button onClick={() => { setEditingTransaction(t); setIsFormOpen(true); }} className="p-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"><Pencil className="w-4 h-4" /></button>
+                                            <button onClick={() => handleDelete(t.id)} className="p-1 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"><Trash2 className="w-4 h-4" /></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -182,20 +182,20 @@ export default function TransactionList({ type }) {
                 </div>
 
                 {/* Mobile Cards */}
-                <div className="md:hidden divide-y divide-slate-100">
+                <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {transactions.map((t) => (
                         <div key={t.id} className="p-4">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="font-semibold text-slate-800">{t.description || t.category}</p>
-                                    <p className="text-sm text-slate-500">{format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}</p>
+                                    <p className="font-semibold text-slate-800 dark:text-slate-200">{t.description || t.category}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}</p>
                                 </div>
                                 <p className={`font-bold text-lg ${type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                                     R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                 </p>
                             </div>
                             <div className="flex justify-between items-center mt-2">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
                                     {t.category}
                                 </span>
                                 <div className="flex gap-2">
@@ -209,17 +209,17 @@ export default function TransactionList({ type }) {
 
                 {/* Loading and Empty States */}
                 {loading && transactions.length === 0 && (
-                    <div className="px-6 py-8 text-center text-slate-500">Carregando...</div>
+                    <div className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">Carregando...</div>
                 )}
                 {!loading && transactions.length === 0 && (
-                    <div className="px-6 py-8 text-center text-slate-500">
+                    <div className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                         {searchQuery ? `Nenhum resultado para "${searchQuery}"` : 'Nenhuma transação encontrada.'}
                     </div>
                 )}
 
                 {/* Load More Button */}
                 {hasMore && !loading && transactions.length > 0 && (
-                    <div className="p-4 border-t border-slate-100">
+                    <div className="p-4 border-t border-slate-100 dark:border-slate-800">
                         <button
                             onClick={() => fetchTransactions()}
                             className="w-full btn-ghost"
@@ -229,7 +229,7 @@ export default function TransactionList({ type }) {
                     </div>
                 )}
                 {loading && transactions.length > 0 && (
-                    <div className="p-4 border-t border-slate-100 text-center text-slate-500">
+                    <div className="p-4 border-t border-slate-100 dark:border-slate-800 text-center text-slate-500 dark:text-slate-400">
                         Carregando...
                     </div>
                 )}

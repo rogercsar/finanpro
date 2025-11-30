@@ -74,27 +74,27 @@ export default function ReportsPage() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <h2 className="text-2xl font-bold text-slate-800">Relatório Mensal</h2>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Relatório Mensal</h2>
                 <input
                     type="month"
                     value={filterDate}
                     onChange={(e) => setFilterDate(e.target.value)}
-                    className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900"
+                    className="px-4 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
                 />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <h3 className="text-sm font-semibold text-slate-600 mb-2">Total Entradas</h3>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+                    <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2">Total Entradas</h3>
                     <div className="text-2xl font-bold text-green-600">R$ {totalIncome.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <h3 className="text-sm font-semibold text-slate-600 mb-2">Total Saídas</h3>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+                    <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-2">Total Saídas</h3>
                     <div className="text-2xl font-bold text-red-600">R$ {totalExpense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-xl shadow-sm text-white">
+                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-xl shadow-lg shadow-blue-500/20 text-white">
                     <h3 className="text-sm font-semibold text-blue-100 mb-2">Saldo Real</h3>
                     <div className={`text-2xl font-bold ${ (totalIncome - totalExpense) >= 0 ? 'text-green-300' : 'text-red-300' }`}>R$ {(totalIncome - totalExpense).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                 </div>
@@ -102,8 +102,8 @@ export default function ReportsPage() {
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center">
-                    <h3 className="font-semibold text-slate-700 mb-4">Despesas por Categoria</h3>
+                <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col items-center">
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-4">Despesas por Categoria</h3>
                     <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -112,13 +112,13 @@ export default function ReportsPage() {
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
-                                <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                                <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} contentStyle={{ backgroundColor: 'rgba(30, 41, 59, 0.8)', border: '1px solid #334155', borderRadius: '0.5rem' }} itemStyle={{ color: '#cbd5e1' }} labelStyle={{ color: '#f1f5f9' }} />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center mt-4">
                         {pieData.slice(0, 5).map((entry, index) => (
-                            <div key={index} className="flex items-center gap-1.5 text-xs text-slate-600">
+                            <div key={index} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
                                 {entry.name}
                             </div>
@@ -126,8 +126,8 @@ export default function ReportsPage() {
                     </div>
                 </div>
 
-                <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col items-center">
-                    <h3 className="font-semibold text-slate-700 mb-4">Entradas vs. Saídas</h3>
+                <div className="lg:col-span-3 bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col items-center">
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-4">Entradas vs. Saídas</h3>
                     <div className="h-72 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={balanceData} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
@@ -143,9 +143,9 @@ export default function ReportsPage() {
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-                    <h3 className="font-semibold text-slate-700">Detalhamento</h3>
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-200">Detalhamento</h3>
                     <div className="flex items-center gap-2">
                         <button className="btn-ghost" onClick={() => {
                             // generate CSV
@@ -162,23 +162,23 @@ export default function ReportsPage() {
                 </div>
                 {/* Desktop Table */}
                 <div className="hidden md:block">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50 border-b border-slate-200">
+                    <table className="w-full text-left text-sm"> 
+                        <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                             <tr>
-                                <th className="px-6 py-3 font-semibold text-slate-700">Data</th>
-                                <th className="px-6 py-3 font-semibold text-slate-700">Tipo</th>
-                                <th className="px-6 py-3 font-semibold text-slate-700">Categoria</th>
-                                <th className="px-6 py-3 font-semibold text-slate-700">Descrição</th>
-                                <th className="px-6 py-3 font-semibold text-slate-700 text-right">Valor</th>
+                                <th className="px-6 py-3 font-semibold text-slate-700 dark:text-slate-300">Data</th>
+                                <th className="px-6 py-3 font-semibold text-slate-700 dark:text-slate-300">Tipo</th>
+                                <th className="px-6 py-3 font-semibold text-slate-700 dark:text-slate-300">Categoria</th>
+                                <th className="px-6 py-3 font-semibold text-slate-700 dark:text-slate-300">Descrição</th>
+                                <th className="px-6 py-3 font-semibold text-slate-700 dark:text-slate-300 text-right">Valor</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {transactions.map((t) => (
-                                <tr key={t.id} className="hover:bg-slate-50">
-                                    <td className="px-6 py-3 text-slate-600">{format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}</td>
+                                <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <td className="px-6 py-3 text-slate-600 dark:text-slate-400">{format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}</td>
                                     <td className="px-6 py-3"><span className={`px-2 py-1 rounded-full text-xs font-medium ${t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.type === 'income' ? 'Entrada' : 'Saída'}</span></td>
-                                    <td className="px-6 py-3 text-slate-600">{t.category}</td>
-                                    <td className="px-6 py-3 text-slate-600">{t.description || '-'}</td>
+                                    <td className="px-6 py-3 text-slate-600 dark:text-slate-400">{t.category}</td>
+                                    <td className="px-6 py-3 text-slate-600 dark:text-slate-400">{t.description || '-'}</td>
                                     <td className={`px-6 py-3 text-right font-medium ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>R$ {Number(t.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                                 </tr>
                             ))}
@@ -186,25 +186,25 @@ export default function ReportsPage() {
                     </table>
                 </div>
                 {/* Mobile Cards */}
-                <div className="md:hidden divide-y divide-slate-100">
+                <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {transactions.map((t) => (
                         <div key={t.id} className="p-4">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="font-semibold text-slate-800">{t.description || t.category}</p>
-                                    <p className="text-sm text-slate-500">{format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}</p>
+                                    <p className="font-semibold text-slate-800 dark:text-slate-200">{t.description || t.category}</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}</p>
                                 </div>
                                 <p className={`font-bold text-lg ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                             </div>
                             <div className="flex justify-between items-center mt-2">
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.category}</span>
+                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{t.category}</span> 
                             </div>
                         </div>
                     ))}
                 </div>
                 {/* Loading and Empty States */}
-                {loading && <div className="text-center p-8 text-slate-500">Carregando...</div>}
-                {!loading && transactions.length === 0 && <div className="text-center p-8 text-slate-500">Nenhuma transação neste mês.</div>}
+                {loading && <div className="text-center p-8 text-slate-500 dark:text-slate-400">Carregando...</div>}
+                {!loading && transactions.length === 0 && <div className="text-center p-8 text-slate-500 dark:text-slate-400">Nenhuma transação neste mês.</div>}
             </div>
         </div>
     );
