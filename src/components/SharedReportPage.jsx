@@ -13,44 +13,40 @@ export default function SharedReportPage() {
 
     useEffect(() => {
         const fetchSharedReport = async () => {
+            if (!token) {
+                setError('Token de compartilhamento não encontrado.');
+                setLoading(false);
+                return;
+            }
+
             try {
-                // 1. Find the shared link by token
-                const { data: linkData, error: linkError } = await supabase
-                    .from('shared_links')
-                    .select('*')
-                    .eq('token', token)
-                    .single();
+                // Chame a Edge Function para buscar os dados de forma segura
+                const { data, error } = await supabase.functions.invoke('shared-report', {
+                    body: { token },
+                });
 
-                if (linkError || !linkData) throw new Error('Link de compartilhamento inválido ou expirado.');
+                if (error) throw error;
+                if (data.error) throw new Error(data.error);
 
-                // 2. Fetch the report data based on the link info
-                if (linkData.item_type === 'report') {
-                    const monthDate = parse(linkData.item_id, 'yyyy-MM', new Date());
-                    const { data: transactions, error: transError } = await supabase
-                        .from('transactions')
-                        .select('*')
-                        .eq('user_id', linkData.user_id)
-                        .gte('date', `${linkData.item_id}-01`)
-                        .lte('date', format(new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0), 'yyyy-MM-dd'));
+                const { transactions, month } = data;
+                const monthDate = parse(month, 'yyyy-MM', new Date());
+                
+                const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+                const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+                
+                const expenseByCategory = transactions.filter(t => t.type === 'expense').reduce((acc, t) => {
+                    acc[t.category] = (acc[t.category] || 0) + t.amount;
+                    return acc;
+                }, {});
 
-                    if (transError) throw transError;
-                    
-                    const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
-                    const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
-                    
-                    const expenseByCategory = transactions.filter(t => t.type === 'expense').reduce((acc, t) => {
-                        acc[t.category] = (acc[t.category] || 0) + t.amount;
-                        return acc;
-                    }, {});
-
-                    setReportData({
-                        month: format(monthDate, 'MMMM \'de\' yyyy', { locale: ptBR }),
-                        totalIncome,
-                        totalExpense,
-                        balance: totalIncome - totalExpense,
-                        pieData: Object.entries(expenseByCategory).map(([name, value]) => ({ name, value }))
-                    });
-                }
+                setReportData({
+                    month: format(monthDate, 'MMMM \'de\' yyyy', { locale: ptBR }),
+                    totalIncome,
+                    totalExpense,
+                    balance: totalIncome - totalExpense,
+                    pieData: Object.entries(expenseByCategory).map(([name, value]) => ({ name, value }))
+                });
+                
             } catch (err) {
                 setError(err.message);
             } finally {
