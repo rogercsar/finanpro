@@ -37,3 +37,6 @@ BEGIN
     RETURN result_data;
 END;
 $$;
+
+-- Concede permissão para que usuários não autenticados (anon) possam chamar esta função
+GRANT EXECUTE ON FUNCTION get_shared_report_data(TEXT) TO anon;
