@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import { Target, Plus, Pencil, Trash2, Check } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -176,10 +177,11 @@ export default function GoalsPage() {
             const isExpired = daysLeft < 0 && !isCompleted;
 
             return (
-              <div
+              <Link
                 key={goal.id}
-                className={`bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border transition-all ${
-                  isCompleted
+                to={`/goals/${goal.id}`}
+                className={`block bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border transition-all hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500/50 ${
+                  isCompleted 
                     ? 'border-green-200 dark:border-green-500/30 bg-green-50 dark:bg-green-900/20'
                     : isExpired
                     ? 'border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-900/20'
@@ -195,14 +197,16 @@ export default function GoalsPage() {
                   </div>
                   <div className="flex gap-2 ml-2">
                     <button
-                      onClick={() => handleEdit(goal)}
+                      onClick={(e) => { e.preventDefault(); handleEdit(goal); }}
                       className="p-2 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      title="Editar Meta"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDelete(goal.id)}
+                      onClick={(e) => { e.preventDefault(); handleDelete(goal.id); }}
                       className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                      title="Excluir Meta"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -271,7 +275,7 @@ export default function GoalsPage() {
                     Meta alcançada!
                   </div>
                 )}
-              </div>
+              </Link>
             );
           })
         )}

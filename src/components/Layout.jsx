@@ -13,7 +13,8 @@ import {
     User,
     Target,
     Brain,
-    Calculator
+    Calculator,
+    Repeat
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useState, useEffect } from 'react';
@@ -50,6 +51,7 @@ export default function Layout() {
         { path: '/reports', label: 'Relatórios', icon: PieChart },
         { path: '/goals', label: 'Metas', icon: Target },
         { path: '/advisor', label: 'Assistente IA', icon: Brain },
+        { path: '/subscriptions', label: 'Assinaturas', icon: Repeat },
         { path: '/simulator', label: 'Simulador', icon: Calculator },
         { path: '/profile', label: 'Perfil', icon: Wallet },
     ];

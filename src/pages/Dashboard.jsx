@@ -162,7 +162,7 @@ export default function Dashboard() {
                         <div className="w-2 h-6 bg-blue-500 rounded-full"></div>
                         Fluxo de Caixa (Mensal)
                     </h3>
-                    {monthlyData && monthlyData.length > 0 ? ( <div className="h-80">
+                    {monthlyData && monthlyData.length > 0 ? ( <div className="h-80"> 
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={monthlyData} barGap={8}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -176,7 +176,7 @@ export default function Dashboard() {
                                 <Bar dataKey="expense" name="Saídas" fill="#ef4444" radius={[6, 6, 0, 0]} maxBarSize={50} />
                             </BarChart>
                         </ResponsiveContainer>
-                    </div>) : (<div className="h-80 flex items-center justify-center text-slate-400">Sem dados para exibir</div>)}
+                    </div>) : (<div className="h-80 flex items-center justify-center text-slate-400 dark:text-slate-500">Sem dados para exibir</div>)}
                 </div>
 
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
@@ -184,7 +184,7 @@ export default function Dashboard() {
                         <div className="w-2 h-6 bg-indigo-500 rounded-full"></div>
                         Despesas por Categoria
                     </h3>
-                    {categoryData && categoryData.length > 0 ? (<div className="h-80">
+                    {categoryData && categoryData.length > 0 ? (<div className="h-80"> 
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -212,7 +212,7 @@ export default function Dashboard() {
                                 </div>
                             ))}
                         </div>
-                    </div>) : (<div className="h-80 flex items-center justify-center text-slate-400">Sem dados para exibir</div>)}
+                    </div>) : (<div className="h-80 flex items-center justify-center text-slate-400 dark:text-slate-500">Sem dados para exibir</div>)}
                 </div>
             </div>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
 import { Pencil, Trash2, Plus, Search, Upload, FileText } from 'lucide-react';
 import TransactionForm from './TransactionForm';
 import FileImporter from './FileImporter';
@@ -156,11 +157,11 @@ export default function TransactionList({ type }) {
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {transactions.map((t) => (
-                                <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                                         {format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}
                                     </td>
-                                    <td className="px-6 py-4 text-slate-900 dark:text-slate-200 font-medium">{t.description || '-'}</td>
+                                    <td className="px-6 py-4 text-slate-900 dark:text-slate-200 font-medium"><Link to={`/transactions/${t.id}`} className="group-hover:underline">{t.description || '-'}</Link></td>
                                     <td className="px-6 py-4">
                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
                                             {t.category}
@@ -184,7 +185,7 @@ export default function TransactionList({ type }) {
                 {/* Mobile Cards */}
                 <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
                     {transactions.map((t) => (
-                        <div key={t.id} className="p-4">
+                        <Link to={`/transactions/${t.id}`} key={t.id} className="block p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50">
                             <div className="flex justify-between items-start">
                                 <div>
                                     <p className="font-semibold text-slate-800 dark:text-slate-200">{t.description || t.category}</p>
@@ -199,11 +200,11 @@ export default function TransactionList({ type }) {
                                     {t.category}
                                 </span>
                                 <div className="flex gap-2">
-                                    <button onClick={() => { setEditingTransaction(t); setIsFormOpen(true); }} className="p-1 text-slate-400 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
-                                    <button onClick={() => handleDelete(t.id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                                    <button onClick={(e) => { e.preventDefault(); setEditingTransaction(t); setIsFormOpen(true); }} className="p-1 text-slate-400 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
+                                    <button onClick={(e) => { e.preventDefault(); handleDelete(t.id); }} className="p-1 text-slate-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
 
