@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { AIAdvisorProvider } from './context/AIAdvisorContext';
 import { AlertsProvider } from './context/AlertsContext';
 import Layout from './components/Layout';
@@ -20,6 +20,8 @@ import SubscriptionDetailPage from './pages/SubscriptionDetailPage';
 import AIChatWidget from './components/AIChatWidgetNew';
 
 function AppContent() {
+  const { user } = useAuth();
+
   return (
     <Router>
       <AIAdvisorProvider>
@@ -45,7 +47,7 @@ function AppContent() {
             <Route path="subscriptions" element={<SubscriptionsPage />} />
           </Route>
         </Routes>
-        <AIChatWidget />
+        {user && <AIChatWidget />}
       </AIAdvisorProvider>
     </Router>
   );
