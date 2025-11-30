@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAIAdvisor } from '../context/AIAdvisorContext';
+import { useAuth } from '../context/AuthContext';
+import { useChatHistory } from '../hooks/useChatHistory';
 import { 
     MessageCircle, X, Send, Lightbulb, ChevronRight, 
     Zap, TrendingUp, AlertCircle, Brain, Volume2, RotateCcw, Plus
@@ -7,7 +9,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 export default function AIChatWidget() {
+    const { user } = useAuth();
     const { analysis, contextualAdvice, isOpen, setIsOpen, loading, createTransaction, createGoal } = useAIAdvisor();
+    const { saveMessage, loadChatHistory } = useChatHistory(user?.id);
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [isSpeaking, setIsSpeaking] = useState(false);
@@ -24,12 +28,22 @@ export default function AIChatWidget() {
     const navigate = useNavigate();
 
     // Initialize chat with welcome message
-    useEffect(() => {
-        if (isOpen && messages.length === 0) {
-            addMessage({
-                text: '👋 Olá! Sou sua Assistente Financeira. Posso ajudá-lo a:\n💰 Registrar entradas\n💸 Registrar saídas\n🎯 Criar metas\n📊 Analisar suas finanças',
-                sender: 'ai',
-                timestamp: new Date()
+    useEffect(() => { 
+        if (isOpen && user?.id && messages.length === 0) {
+            loadChatHistory().then(history => {
+                if (history.length > 0) {
+                    setMessages(history.map(h => ({
+                        text: h.message_text,
+                        sender: h.sender,
+                        timestamp: new Date(h.timestamp)
+                    })));
+                } else {
+                    addMessage({
+                        text: '👋 Olá! Sou sua Assistente Financeira. Posso ajudá-lo a:\n💰 Registrar entradas\n💸 Registrar saídas\n🎯 Criar metas\n📊 Analisar suas finanças',
+                        sender: 'ai',
+                        timestamp: new Date()
+                    });
+                }
             });
         }
     }, [isOpen]);
@@ -52,6 +66,9 @@ export default function AIChatWidget() {
 
     const addMessage = (message) => {
         setMessages(prev => [...prev, message]);
+        if (user?.id) {
+            saveMessage(message.text, message.sender);
+        }
     };
 
     const handleSendMessage = (e) => {
