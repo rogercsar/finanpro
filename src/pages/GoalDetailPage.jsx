@@ -43,11 +43,11 @@ export default function GoalDetailPage() {
     }, [id]);
 
     if (loading) {
-        return <div className="text-center p-12">Carregando detalhes da meta...</div>;
+        return <div className="text-center p-12 dark:text-slate-400">Carregando detalhes da meta...</div>;
     }
 
     if (!goal) {
-        return <div className="text-center p-12">Meta não encontrada.</div>;
+        return <div className="text-center p-12 dark:text-slate-400">Meta não encontrada.</div>;
     }
 
     const progress = Math.min((goal.current_amount / goal.target_amount) * 100, 100);

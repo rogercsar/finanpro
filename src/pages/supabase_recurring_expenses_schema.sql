@@ -32,6 +32,3 @@ ALTER TABLE recurring_expenses ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users can manage their own recurring expenses" ON recurring_expenses;
 CREATE POLICY "Users can manage their own recurring expenses" ON recurring_expenses
     FOR ALL USING (auth.uid() = user_id);
-
--- Adiciona a tabela à publicação do Realtime para que as alterações sejam transmitidas
-ALTER PUBLICATION supabase_realtime ADD TABLE recurring_expenses;

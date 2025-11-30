@@ -17,6 +17,7 @@ import SubscriptionsPage from './pages/SubscriptionsPage';
 import GoalDetailPage from './pages/GoalDetailPage';
 import TransactionDetailPage from './pages/TransactionDetailPage';
 import SubscriptionDetailPage from './pages/SubscriptionDetailPage';
+import SharedReportPage from './components/SharedReportPage';
 import AIChatWidget from './components/AIChatWidgetNew';
 
 function AppContent() {
@@ -33,19 +34,20 @@ function AppContent() {
               <Layout />
             </ProtectedRoute>
           }>
-            <Route index element={<Dashboard />} /> 
+            <Route index element={<Dashboard />} />
             <Route path="income" element={<IncomePage />} />
             <Route path="expenses" element={<ExpensePage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="goals" element={<GoalsPage />} />
-            <Route path="goals/:id" element={<GoalDetailPage />} />
-            <Route path="transactions/:id" element={<TransactionDetailPage />} />
-            <Route path="subscriptions/:id" element={<SubscriptionDetailPage />} />
             <Route path="advisor" element={<FinancialAdvisorPage />} />
             <Route path="simulator" element={<SimulatorPage />} />
             <Route path="subscriptions" element={<SubscriptionsPage />} />
+            <Route path="goals/:id" element={<GoalDetailPage />} />
+            <Route path="transactions/:id" element={<TransactionDetailPage />} />
+            <Route path="subscriptions/:id" element={<SubscriptionDetailPage />} />
           </Route>
+          <Route path="/share/report/:token" element={<SharedReportPage />} />
         </Routes>
         {user && <AIChatWidget />}
       </AIAdvisorProvider>

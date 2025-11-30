@@ -49,7 +49,7 @@ export default function TransactionDetailPage() {
         return <div className="text-center p-12 dark:text-slate-400">Transação não encontrada.</div>;
     }
 
-    const isIncome = transaction.type === 'income';
+    const isIncome = transaction?.type === 'income';
 
     return (
         <div className="space-y-6">

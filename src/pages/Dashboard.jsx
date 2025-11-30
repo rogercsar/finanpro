@@ -101,38 +101,38 @@ export default function Dashboard() {
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
     return (
-        <div className="space-y-8 bg-blue-50 p-6 rounded-xl">
+        <div className="space-y-8 bg-blue-50 dark:bg-transparent p-6 rounded-xl">
             <div>
-                <h2 className="text-3xl font-bold text-slate-800 tracking-tight">Dashboard</h2>
-                <p className="text-slate-500 mt-1">Visão geral das suas finanças</p>
+                <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Dashboard</h2>
+                <p className="text-slate-500 dark:text-slate-400 mt-1">Visão geral das suas finanças</p>
             </div>
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative overflow-hidden group">
-                    <div className="absolute right-0 top-0 w-32 h-32 bg-green-50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md transition-shadow relative overflow-hidden group">
+                    <div className="absolute right-0 top-0 w-32 h-32 bg-green-50 dark:bg-green-900/30 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
                     <div className="relative flex items-center gap-4">
                         <div className="p-4 bg-green-100 text-green-600 rounded-xl shadow-sm">
                             <TrendingUp className="w-8 h-8" />
                         </div>
                         <div>
-                            <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">Entradas</p>
-                            <h3 className="text-3xl font-bold text-slate-800 mt-1">
+                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Entradas</p>
+                            <h3 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-1">
                                 R$ {summary.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </h3>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative overflow-hidden group">
-                    <div className="absolute right-0 top-0 w-32 h-32 bg-red-50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 hover:shadow-md transition-shadow relative overflow-hidden group">
+                    <div className="absolute right-0 top-0 w-32 h-32 bg-red-50 dark:bg-red-900/30 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
                     <div className="relative flex items-center gap-4">
                         <div className="p-4 bg-red-100 text-red-600 rounded-xl shadow-sm">
                             <TrendingDown className="w-8 h-8" />
                         </div>
                         <div>
-                            <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">Saídas</p>
-                            <h3 className="text-3xl font-bold text-slate-800 mt-1">
+                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Saídas</p>
+                            <h3 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-1">
                                 R$ {summary.expense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </h3>
                         </div>
@@ -157,20 +157,22 @@ export default function Dashboard() {
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
                         <div className="w-2 h-6 bg-blue-500 rounded-full"></div>
                         Fluxo de Caixa (Mensal)
                     </h3>
                     {monthlyData && monthlyData.length > 0 ? ( <div className="h-80"> 
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={monthlyData} barGap={8}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(203, 213, 225, 0.2)" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
                                 <Tooltip
-                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                    cursor={{ fill: '#f8fafc' }}
+                                    contentStyle={{ backgroundColor: 'rgba(30, 41, 59, 0.8)', border: '1px solid #334155', borderRadius: '0.5rem' }}
+                                    itemStyle={{ color: '#cbd5e1' }}
+                                    labelStyle={{ color: '#f1f5f9' }}
+                                    cursor={{ fill: 'rgba(148, 163, 184, 0.1)' }}
                                 />
                                 <Bar dataKey="income" name="Entradas" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={50} />
                                 <Bar dataKey="expense" name="Saídas" fill="#ef4444" radius={[6, 6, 0, 0]} maxBarSize={50} />
@@ -179,8 +181,8 @@ export default function Dashboard() {
                     </div>) : (<div className="h-80 flex items-center justify-center text-slate-400 dark:text-slate-500">Sem dados para exibir</div>)}
                 </div>
 
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 flex items-center gap-2">
                         <div className="w-2 h-6 bg-indigo-500 rounded-full"></div>
                         Despesas por Categoria
                     </h3>
@@ -201,12 +203,12 @@ export default function Dashboard() {
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>
-                                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                <Tooltip contentStyle={{ backgroundColor: 'rgba(30, 41, 59, 0.8)', border: '1px solid #334155', borderRadius: '0.5rem' }} itemStyle={{ color: '#cbd5e1' }} labelStyle={{ color: '#f1f5f9' }} />
                             </PieChart>
                         </ResponsiveContainer>
                         <div className="flex flex-wrap gap-2 justify-center mt-4 max-h-20 overflow-y-auto">
                             {categoryData.map((entry, index) => (
-                                <div key={index} className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded-full">
+                                <div key={index} className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded-full">
                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
                                     {entry.name}
                                 </div>

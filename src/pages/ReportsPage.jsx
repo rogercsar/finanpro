@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { Share2, Copy, Mail, MessageSquare, Smartphone, X } from 'lucide-react';
 import { format, parse, lastDayOfMonth, startOfMonth } from 'date-fns';
 import {
     PieChart,
@@ -20,6 +21,9 @@ export default function ReportsPage() {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [shareUrl, setShareUrl] = useState('');
+    const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 
     useEffect(() => {
         const fetchReport = async () => {
@@ -67,6 +71,30 @@ export default function ReportsPage() {
     const pieData = Object.entries(expenseByCategory)
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
+
+    const handleShare = async () => {
+        setIsGeneratingLink(true);
+        try {
+            const token = `${user.id.substring(0, 4)}${Date.now()}`;
+            const { error } = await supabase.from('shared_links').insert({
+                user_id: user.id,
+                item_type: 'report',
+                item_id: filterDate, // YYYY-MM
+                token: token
+            });
+
+            if (error) throw error;
+
+            const url = `${window.location.origin}/share/report/${token}`;
+            setShareUrl(url);
+            setShareModalOpen(true);
+        } catch (error) {
+            console.error('Error creating share link:', error);
+            alert('Erro ao criar link de compartilhamento.');
+        } finally {
+            setIsGeneratingLink(false);
+        }
+    };
 
     const balanceData = [{ name: 'Balanço', income: totalIncome, expense: totalExpense }];
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'];
@@ -145,8 +173,12 @@ export default function ReportsPage() {
 
             <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div className="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
-                    <h3 className="font-semibold text-slate-700 dark:text-slate-200">Detalhamento</h3>
+                    <h3 className="font-semibold text-slate-700 dark:text-slate-200">Detalhamento do Mês</h3>
                     <div className="flex items-center gap-2">
+                        <button onClick={handleShare} disabled={isGeneratingLink} className="btn-ghost flex items-center gap-2 disabled:opacity-50">
+                            <Share2 className="w-4 h-4" />
+                            {isGeneratingLink ? 'Gerando...' : 'Compartilhar'}
+                        </button>
                         <button className="btn-ghost" onClick={() => {
                             // generate CSV
                             const header = ['Data','Tipo','Categoria','Descrição','Valor'];
@@ -206,6 +238,40 @@ export default function ReportsPage() {
                 {loading && <div className="text-center p-8 text-slate-500 dark:text-slate-400">Carregando...</div>}
                 {!loading && transactions.length === 0 && <div className="text-center p-8 text-slate-500 dark:text-slate-400">Nenhuma transação neste mês.</div>}
             </div>
+
+            {/* Share Modal */}
+            {shareModalOpen && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShareModalOpen(false)}>
+                    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center p-4 border-b border-slate-100 dark:border-slate-800">
+                            <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Compartilhar Relatório</h3>
+                            <button onClick={() => setShareModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 grid grid-cols-2 gap-4">
+                            <a href={`https://wa.me/?text=Confira%20meu%20relatório%20financeiro%20do%20FinanIA:%20${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" className="share-button bg-green-50 hover:bg-green-100 text-green-700">
+                                <MessageSquare className="w-6 h-6" /> WhatsApp
+                            </a>
+                            <a href={`mailto:?subject=Relatório Financeiro&body=Confira meu relatório financeiro do FinanIA: ${encodeURIComponent(shareUrl)}`} className="share-button bg-blue-50 hover:bg-blue-100 text-blue-700">
+                                <Mail className="w-6 h-6" /> E-mail
+                            </a>
+                            <a href={`sms:?&body=Confira%20meu%20relatório%20financeiro%20do%20FinanIA:%20${encodeURIComponent(shareUrl)}`} className="share-button bg-sky-50 hover:bg-sky-100 text-sky-700">
+                                <Smartphone className="w-6 h-6" /> SMS
+                            </a>
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(shareUrl);
+                                    alert('Link copiado!');
+                                }}
+                                className="share-button bg-slate-100 hover:bg-slate-200 text-slate-700"
+                            >
+                                <Copy className="w-6 h-6" /> Copiar Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

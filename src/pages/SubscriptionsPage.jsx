@@ -15,7 +15,6 @@ export default function SubscriptionsPage() {
         type: 'subscription',
         amount: '',
         payment_date: '',
-        last_paid_month: null,
     });
 
     const fetchItems = async () => {
@@ -53,7 +52,6 @@ export default function SubscriptionsPage() {
             type: item.type,
             amount: item.amount,
             payment_date: item.payment_date,
-            last_paid_month: item.last_paid_month,
         });
         setIsFormOpen(true);
     };
