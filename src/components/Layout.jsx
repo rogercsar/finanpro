@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useAIAdvisor } from '../context/AIAdvisorContext';
 import {
     LayoutDashboard,
     PieChart,
@@ -11,7 +12,8 @@ import {
     Wallet,
     User,
     Target,
-    Brain
+    Brain,
+    Calculator
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useState, useEffect } from 'react';
@@ -20,6 +22,7 @@ import clsx from 'clsx';
 export default function Layout() {
     const { signOut, user } = useAuth();
     const location = useLocation();
+    const { analysis } = useAIAdvisor();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -47,8 +50,29 @@ export default function Layout() {
         { path: '/reports', label: 'Relatórios', icon: PieChart },
         { path: '/goals', label: 'Metas', icon: Target },
         { path: '/advisor', label: 'Assistente IA', icon: Brain },
+        { path: '/simulator', label: 'Simulador', icon: Calculator },
         { path: '/profile', label: 'Perfil', icon: Wallet },
     ];
+
+    const getHealthBorderColor = () => {
+        if (!analysis || analysis.healthScore === null) {
+            return 'ring-slate-200'; // Cor padrão ou de carregamento
+        }
+        const score = analysis.healthScore;
+        if (score >= 75) return 'ring-green-500'; // Ótimo
+        if (score >= 40) return 'ring-yellow-500'; // Alerta
+        return 'ring-red-500'; // Crítico
+    };
+
+    const getHealthBorderTooltip = () => {
+        if (!analysis || analysis.healthScore === null) {
+            return 'Saúde financeira sendo calculada...';
+        }
+        const score = analysis.healthScore;
+        if (score >= 75) return `Saúde Financeira: Ótima (${score}/100)`;
+        if (score >= 40) return `Saúde Financeira: Atenção (${score}/100).`;
+        return `Saúde Financeira: Crítica (${score}/100).`;
+    };
 
     return (
         <div className="min-h-screen bg-slate-50/50 flex font-sans overflow-x-hidden">
@@ -90,7 +114,13 @@ export default function Layout() {
 
                     <div className="p-4 m-4 bg-slate-50 rounded-2xl border border-slate-100">
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold border-2 border-white shadow-sm overflow-hidden flex-shrink-0">
+                            <div
+                                className={clsx(
+                                    "w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-white font-bold border-2 border-white shadow-sm overflow-hidden flex-shrink-0 ring-2 ring-offset-2 ring-offset-slate-50 transition-colors duration-500",
+                                    getHealthBorderColor()
+                                )}
+                                title={getHealthBorderTooltip()}
+                            >
                                 {user?.user_metadata?.avatar_url ? (
                                     <img src={user.user_metadata.avatar_url} alt="avatar" className="w-full h-full object-cover" />
                                 ) : (

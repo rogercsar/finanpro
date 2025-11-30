@@ -13,6 +13,7 @@ import ReportsPage from './pages/ReportsPage';
 import ProfilePage from './pages/ProfilePage';
 import GoalsPage from './pages/GoalsPage';
 import FinancialAdvisorPage from './pages/FinancialAdvisorPage';
+import SimulatorPage from './pages/SimulatorPage';
 import AIChatWidget from './components/AIChatWidget';
 
 function AppContent() {
@@ -36,6 +37,7 @@ function AppContent() {
             <Route path="profile" element={<ProfilePage />} />
             <Route path="goals" element={<GoalsPage />} />
             <Route path="advisor" element={<FinancialAdvisorPage />} />
+            <Route path="simulator" element={<SimulatorPage />} />
           </Route>
         </Routes>
         <AIChatWidget />

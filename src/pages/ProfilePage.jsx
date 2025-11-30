@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useAIAdvisor } from '../context/AIAdvisorContext';
 import { supabase } from '../lib/supabase';
 import { useSharedAccount } from '../hooks/useSharedAccount';
 import { User, Camera, Lock, Share2, Check, X, UserPlus } from 'lucide-react';
+import clsx from 'clsx';
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const { sharedAccounts, invitations, sendInvitation, acceptInvitation, rejectInvitation, removeSharedUser } = useSharedAccount();
+  const { achievements, analysis } = useAIAdvisor();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ full_name: '', phone: '', email: '', avatar_url: '' });
   const [preview, setPreview] = useState(null);
@@ -90,6 +93,26 @@ export default function ProfilePage() {
     }
   };
 
+  const getHealthBorderColor = () => {
+    if (!analysis || analysis.healthScore === null) {
+        return 'ring-slate-200'; // Cor padrão ou de carregamento
+    }
+    const score = analysis.healthScore;
+    if (score >= 75) return 'ring-green-500'; // Ótimo
+    if (score >= 40) return 'ring-yellow-500'; // Alerta
+    return 'ring-red-500'; // Crítico
+  };
+
+  const getHealthBorderTooltip = () => {
+      if (!analysis || analysis.healthScore === null) {
+          return 'Saúde financeira sendo calculada...';
+      }
+      const score = analysis.healthScore;
+      if (score >= 75) return `Saúde Financeira: Ótima (${score}/100)`;
+      if (score >= 40) return `Saúde Financeira: Atenção (${score}/100). Alguns pontos podem ser melhorados.`;
+      return `Saúde Financeira: Crítica (${score}/100). É importante revisar suas finanças.`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -97,13 +120,22 @@ export default function ProfilePage() {
       </div>
 
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 max-w-2xl">
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="w-28 h-28 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden mx-auto md:mx-0 flex-shrink-0">
-            {preview ? (
-              <img src={preview} alt="avatar" className="w-full h-full object-cover" />
-            ) : (
-              <div className="text-slate-400"><User className="w-10 h-10" /></div>
-            )}
+        <div className="flex flex-col sm:flex-row gap-6 sm:items-start">
+          <div className="flex-shrink-0 mx-auto sm:mx-0">
+            <span title={getHealthBorderTooltip()}>
+              <div
+                className={clsx(
+                  "w-28 h-28 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden ring-4 ring-offset-4 ring-offset-white transition-colors duration-500",
+                  getHealthBorderColor()
+                )}
+              >
+                {preview ? (
+                  <img src={preview} alt="avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-slate-400"><User className="w-10 h-10" /></div>
+                )}
+              </div>
+            </span>
           </div>
 
           <div className="flex-1 w-full">
@@ -154,7 +186,10 @@ export default function ProfilePage() {
               <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
                 <Share2 className="w-4 h-4" /> Compartilhar Conta
               </h4>
-              <p className="text-xs text-slate-600 mb-3">Convide outro usuário para acessar e gerenciar esta conta junto com você.</p>
+              <p className="text-xs text-slate-600 mb-3">
+                Convide outro usuário para acessar e gerenciar esta conta. O usuário convidado verá o convite
+                aqui na tela de Perfil ao fazer login com o e-mail informado.
+              </p>
               
               {!showInviteForm ? (
                 <button onClick={() => setShowInviteForm(true)} className="btn-ghost flex items-center gap-2 mb-4">
@@ -213,10 +248,12 @@ export default function ProfilePage() {
                   <div className="space-y-2">
                     {sharedAccounts
                       .filter(a => a.status === 'accepted')
-                      .map(shared => (
+                      .map(shared => {
+                        const sharedUserEmail = shared.owner_id === user?.id ? shared.invite_email : user?.email;
+                        return (
                         <div key={shared.id} className="flex items-center justify-between p-2 bg-green-50 border border-green-100 rounded-lg">
                           <div>
-                            <p className="text-sm font-medium text-slate-900">{shared.invite_email || 'Usuário'}</p>
+                            <p className="text-sm font-medium text-slate-900">{sharedUserEmail}</p>
                             <p className="text-xs text-slate-500">Acesso desde {new Date(shared.accepted_at).toLocaleDateString('pt-BR')}</p>
                           </div>
                           {shared.owner_id === user?.id && (
@@ -228,7 +265,8 @@ export default function ProfilePage() {
                             </button>
                           )}
                         </div>
-                      ))}
+                        );
+                      })}
                   </div>
                 </div>
               )}
@@ -267,6 +305,26 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Achievements Section */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 max-w-2xl">
+        <h3 className="text-lg font-bold text-slate-800 mb-4">🏆 Conquistas</h3>
+        {achievements && achievements.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {achievements.map(ach => (
+              <div key={ach.id} className="flex flex-col items-center text-center p-3 bg-slate-50 rounded-lg border border-slate-200" title={`${ach.name}: ${ach.description}`}>
+                <div className="text-4xl mb-2">{ach.icon || '🏅'}</div>
+                <p className="text-xs font-semibold text-slate-700 leading-tight">{ach.name}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-slate-500">
+            <p>Continue usando o FinanIA para desbloquear novas conquistas!</p>
+          </div>
+        )}
+      </div>
+
     </div>
   );
 }

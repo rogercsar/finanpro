@@ -4,8 +4,12 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useAlerts } from '../context/AlertsContext';
 import { parse } from 'papaparse';
+import * as pdfjsLib from 'pdfjs-dist/build/pdf';
 
-export default function CSVImporter({ onImportSuccess }) {
+// Configure o worker do pdf.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+export default function FileImporter({ onImportSuccess }) {
     const { user } = useAuth();
     const { createAlert } = useAlerts();
     const [loading, setLoading] = useState(false);
@@ -31,6 +35,7 @@ export default function CSVImporter({ onImportSuccess }) {
         const selectedFile = e.target.files?.[0];
         if (!selectedFile) return;
 
+        // Lógica para CSV
         setFile(selectedFile);
         setLoading(true);
 
@@ -48,6 +53,66 @@ export default function CSVImporter({ onImportSuccess }) {
                 setLoading(false);
             }
         });
+    };
+
+    const handlePdfFile = async (file) => {
+        setLoading(true);
+        try {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const typedarray = new Uint8Array(event.target.result);
+                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                let fullText = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    fullText += textContent.items.map(item => item.str).join(' ');
+                }
+                parseNubankPdf(fullText);
+            };
+            reader.readAsArrayBuffer(file);
+        } catch (error) {
+            createAlert('pdf_error', 'Erro ao ler PDF', error.message, 'error');
+            setLoading(false);
+        }
+    };
+
+    const parseNubankPdf = (text) => {
+        // Regex para encontrar o ano da fatura (ex: VENCIMENTO 20 DEZ 2025)
+        const yearMatch = text.match(/VENCIMENTO\s+\d{2}\s+[A-Z]{3}\s+(\d{4})/);
+        const year = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
+
+        // Regex para encontrar as transações
+        const transactionRegex = /(\d{2}\s[A-Z]{3})\s+(.+?)\s+([\d.,]+)/g;
+        const transactions = [];
+        let match;
+
+        const monthMap = { 'JAN': '01', 'FEV': '02', 'MAR': '03', 'ABR': '04', 'MAI': '05', 'JUN': '06', 'JUL': '07', 'AGO': '08', 'SET': '09', 'OUT': '10', 'NOV': '11', 'DEZ': '12' };
+
+        while ((match = transactionRegex.exec(text)) !== null) {
+            const [_, dateStr, description, amountStr] = match;
+            
+            // Ignorar linhas que não são transações (ex: "Pagamento recebido")
+            if (description.toLowerCase().includes('pagamento em')) continue;
+
+            const [day, monthAbbr] = dateStr.split(' ');
+            const month = monthMap[monthAbbr];
+
+            transactions.push({
+                date: `${year}-${month}-${day}`,
+                description: description.trim(),
+                amount: parseFloat(amountStr.replace(/\./g, '').replace(',', '.')),
+                type: 'expense' // Fatura de cartão é sempre despesa
+            });
+        }
+
+        if (transactions.length > 0) {
+            setRows(transactions);
+            setStep(3); // Pula direto para a pré-visualização
+        } else {
+            createAlert('pdf_parse_error', 'Nenhuma transação encontrada', 'Não foi possível extrair transações do PDF. Verifique se é um extrato do Nubank.', 'warning');
+        }
+        setLoading(false);
     };
 
     const getMappedTransactions = () => {
@@ -109,12 +174,18 @@ export default function CSVImporter({ onImportSuccess }) {
         switch (step) {
             case 1:
                 return (
-                    <label className="p-4 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors flex flex-col items-center gap-2 text-center">
-                        <Upload className="w-6 h-6 text-blue-600" />
-                        <p className="text-sm font-medium text-slate-900">Selecione o arquivo CSV</p>
-                        <p className="text-xs text-slate-600">Seu extrato bancário ou fatura do cartão.</p>
-                        <input type="file" accept=".csv" onChange={handleFileSelect} className="hidden" disabled={loading} />
-                    </label>
+                    <div className="flex gap-2">
+                        <label className="flex-1 p-4 border-2 border-dashed border-blue-300 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors flex flex-col items-center gap-2 text-center">
+                            <Upload className="w-6 h-6 text-blue-600" />
+                            <p className="text-sm font-medium text-slate-900">Importar CSV</p>
+                            <input type="file" accept=".csv" onChange={handleFileSelect} className="hidden" disabled={loading} />
+                        </label>
+                        <label className="flex-1 p-4 border-2 border-dashed border-purple-300 rounded-lg cursor-pointer hover:bg-purple-50 transition-colors flex flex-col items-center gap-2 text-center">
+                            <Upload className="w-6 h-6 text-purple-600" />
+                            <p className="text-sm font-medium text-slate-900">Importar PDF (Nubank)</p>
+                            <input type="file" accept=".pdf" onChange={(e) => handlePdfFile(e.target.files[0])} className="hidden" disabled={loading} />
+                        </label>
+                    </div>
                 );
             case 2:
                 return (
@@ -148,7 +219,7 @@ export default function CSVImporter({ onImportSuccess }) {
                     </div>
                 );
             case 3:
-                const previewTransactions = getMappedTransactions().slice(0, 5);
+                const previewTransactions = (mapping.date ? getMappedTransactions() : rows).slice(0, 5);
                 return (
                     <div className="space-y-4">
                         <p className="text-sm font-medium text-slate-900">Pré-visualização da importação:</p>
@@ -166,7 +237,7 @@ export default function CSVImporter({ onImportSuccess }) {
                             ))}
                         </div>
                         <div className="flex gap-2 pt-2">
-                            <button onClick={() => setStep(2)} className="btn-ghost flex-1">Voltar</button>
+                            <button onClick={resetState} className="btn-ghost flex-1">Cancelar</button>
                             <button
                                 onClick={handleConfirmImport}
                                 disabled={loading}
@@ -184,7 +255,7 @@ export default function CSVImporter({ onImportSuccess }) {
 
     return (
         <div className="bg-white rounded-lg border border-slate-200 p-4">
-            <h3 className="font-bold text-slate-900 mb-4">📥 Importar Extrato (CSV)</h3>
+            <h3 className="font-bold text-slate-900 mb-4">📥 Importar Extrato</h3>
             {loading && step === 1 && <p className="text-sm text-slate-600">Analisando arquivo...</p>}
             {renderStep()}
         </div>

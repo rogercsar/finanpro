@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAlerts } from './AlertsContext';
 import { useAuth } from './AuthContext';
 import { analyzeFinances } from '../lib/financialAnalyzer';
 import { useLocation } from 'react-router-dom';
@@ -14,7 +15,8 @@ import {
 
 const AIAdvisorContext = createContext();
 
-export function AIAdvisorProvider({ children, createAlert }) {
+export function AIAdvisorProvider({ children }) {
+    const { createAlert } = useAlerts();
     const { user } = useAuth();
     const location = useLocation();
     const [analysis, setAnalysis] = useState(null);
@@ -23,6 +25,7 @@ export function AIAdvisorProvider({ children, createAlert }) {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [lastRecommendationAlertTime, setLastRecommendationAlertTime] = useState(0);
+    const [achievements, setAchievements] = useState([]);
 
     // Fetch analysis dados
     useEffect(() => {
@@ -30,6 +33,17 @@ export function AIAdvisorProvider({ children, createAlert }) {
             fetchAnalysis();
         }
     }, [user]);
+
+    // Fetch achievements
+    useEffect(() => {
+        const fetchAchievements = async () => {
+            if (!user) return;
+            const { data } = await supabase.from('achievements').select('*').eq('user_id', user.id);
+            setAchievements(data || []);
+        };
+        fetchAchievements();
+    }, [user]);
+
 
     // Update contextual advice based on current page
     useEffect(() => {
@@ -96,11 +110,74 @@ export function AIAdvisorProvider({ children, createAlert }) {
 
                 setPreviousAnalysis(analysis);
                 setAnalysis(result);
+                checkAchievements(result, transData, goalsData); // <-- Lógica de Gamificação
             }
         } catch (error) {
             console.error('Error fetching analysis:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const checkAchievements = async (currentAnalysis, transactions, goals) => {
+        if (!user) return;
+
+        // Fetch the latest achievements from DB to prevent race conditions
+        const { data: currentAchievements } = await supabase.from('achievements').select('type').eq('user_id', user.id);
+        const existingAchievements = new Set((currentAchievements || []).map(a => a.type));
+
+        const newAchievements = [];
+
+        const allAchievements = [
+            { type: 'FIRST_TRANSACTION', name: 'Primeiros Passos', description: 'Você registrou sua primeira transação!', icon: '👟' },
+            { type: 'FIRST_GOAL', name: 'Planejador', description: 'Você criou sua primeira meta financeira!', icon: '🗺️' },
+            { type: 'SAVER_LV1', name: 'Poupador Iniciante', description: 'Atingiu uma taxa de poupança de 10%!', icon: '🌱' },
+            { type: 'SAVER_LV2', name: 'Poupador Mestre', description: 'Atingiu uma taxa de poupança de 20%!', icon: '🌳' },
+            { type: 'GOAL_COMPLETED', name: 'Conquistador', description: 'Você completou sua primeira meta!', icon: '🏆' },
+        ];
+
+        // 1. Primeira Transação
+        if (transactions.length > 0 && !existingAchievements.has('FIRST_TRANSACTION')) {
+            newAchievements.push(allAchievements.find(a => a.type === 'FIRST_TRANSACTION'));
+        }
+
+        // 2. Primeira Meta
+        if (goals.length > 0 && !existingAchievements.has('FIRST_GOAL')) {
+            newAchievements.push(allAchievements.find(a => a.type === 'FIRST_GOAL'));
+        }
+
+        // 3. Taxa de Poupança
+        if (currentAnalysis.summary.savingsRate >= 10 && !existingAchievements.has('SAVER_LV1')) {
+            newAchievements.push(allAchievements.find(a => a.type === 'SAVER_LV1'));
+        }
+        if (currentAnalysis.summary.savingsRate >= 20 && !existingAchievements.has('SAVER_LV2')) {
+            newAchievements.push(allAchievements.find(a => a.type === 'SAVER_LV2'));
+        }
+
+        // 4. Meta Concluída
+        const hasCompletedGoal = goals.some(g => g.current_amount >= g.target_amount);
+        if (hasCompletedGoal && !existingAchievements.has('GOAL_COMPLETED')) {
+            newAchievements.push(allAchievements.find(a => a.type === 'GOAL_COMPLETED'));
+        }
+
+        if (newAchievements.length > 0) {
+            const achievementsToInsert = newAchievements.map(ach => ({
+                user_id: user.id,
+                type: ach.type,
+                name: ach.name,
+                description: ach.description,
+                icon: ach.icon,
+            }));
+
+            const { data, error } = await supabase.from('achievements').insert(achievementsToInsert).select();
+
+            if (!error && data) {
+                setAchievements(prev => [...prev, ...data]);
+                // Disparar alerta/toast para cada nova conquista
+                data.forEach(ach => {
+                    createAlert('achievement_unlocked', `${ach.icon} Conquista Desbloqueada!`, ach.name, 'success', null, ach);
+                });
+            }
         }
     };
 
@@ -285,7 +362,8 @@ export function AIAdvisorProvider({ children, createAlert }) {
             loading,
             fetchAnalysis,
             createTransaction,
-            createGoal
+            createGoal,
+            achievements
         }}>
             {children}
         </AIAdvisorContext.Provider>

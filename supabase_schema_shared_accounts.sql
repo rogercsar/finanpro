@@ -14,23 +14,21 @@ create table if not exists shared_accounts (
 alter table shared_accounts enable row level security;
 
 -- Drop existing policies if they exist
-drop policy if exists "Users can see their own shared accounts" on shared_accounts;
-drop policy if exists "Users can see invites sent to them" on shared_accounts;
-drop policy if exists "Users can create invites" on shared_accounts;
-drop policy if exists "Users can update their own invites" on shared_accounts;
+DROP POLICY IF EXISTS "Users can see their own shared accounts" ON shared_accounts;
+DROP POLICY IF EXISTS "Users can see invites sent to them" ON shared_accounts;
+DROP POLICY IF EXISTS "Users can create invites" ON shared_accounts;
+DROP POLICY IF EXISTS "Users can update their own invites" ON shared_accounts;
+DROP POLICY IF EXISTS "Users can delete their own invites" ON shared_accounts;
 
 -- Create policies
-create policy "Users can see their own shared accounts" on shared_accounts
-  for select using (auth.uid() = owner_id or auth.uid() = invited_user_id);
+CREATE POLICY "Users can manage their own shared accounts" ON shared_accounts
+  FOR ALL USING (auth.uid() = owner_id OR auth.email() = invite_email);
 
 create policy "Users can create invites" on shared_accounts
   for insert with check (auth.uid() = owner_id);
 
 create policy "Users can update their own invites" on shared_accounts
   for update using (auth.uid() = owner_id or auth.uid() = invited_user_id);
-
-create policy "Users can delete their own invites" on shared_accounts
-  for delete using (auth.uid() = owner_id or auth.uid() = invited_user_id);
 
 -- Add shared_accounts table to Realtime publication
 alter publication supabase_realtime add table shared_accounts;
@@ -57,11 +55,32 @@ begin
 end;
 $$ language plpgsql;
 
+-- Function to link pending invites when a new user signs up
+CREATE OR REPLACE FUNCTION public.link_pending_invites()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.shared_accounts
+  SET invited_user_id = NEW.id
+  WHERE invite_email = NEW.email AND status = 'pending';
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger to link invites on new user creation
+CREATE TRIGGER on_new_user_link_invites
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.link_pending_invites();
+
 -- Update transactions RLS policy to support shared accounts
 drop policy if exists "Enable read access for authenticated users" on transactions;
 drop policy if exists "Enable insert for authenticated users" on transactions;
 drop policy if exists "Enable update for users based on id" on transactions;
 drop policy if exists "Enable delete for users based on id" on transactions;
+-- Also drop the new policies in case they already exist
+drop policy if exists "Enable read access for shared accounts" on transactions;
+drop policy if exists "Enable insert for shared accounts" on transactions;
+drop policy if exists "Enable update for shared accounts" on transactions;
+drop policy if exists "Enable delete for shared accounts" on transactions;
 
 create policy "Enable read access for shared accounts" on transactions
   for select using (
@@ -100,6 +119,11 @@ drop policy if exists "Users can only see their own goals" on goals;
 drop policy if exists "Users can insert their own goals" on goals;
 drop policy if exists "Users can update own goals" on goals;
 drop policy if exists "Users can delete own goals" on goals;
+-- Also drop the new policies in case they already exist
+drop policy if exists "Users can see their account goals" on goals;
+drop policy if exists "Users can insert account goals" on goals;
+drop policy if exists "Users can update account goals" on goals;
+drop policy if exists "Users can delete account goals" on goals;
 
 create policy "Users can see their account goals" on goals
   for select using (

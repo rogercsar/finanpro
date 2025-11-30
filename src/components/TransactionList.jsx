@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
-import { Pencil, Trash2, Plus, Search } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, Upload, FileText } from 'lucide-react';
 import TransactionForm from './TransactionForm';
+import FileImporter from './FileImporter';
 
 const TRANSACTIONS_PER_PAGE = 15;
 
@@ -14,6 +15,7 @@ export default function TransactionList({ type }) {
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [showImporter, setShowImporter] = useState(false);
 
     const fetchTransactions = async (isNewSearch = false) => {
         if (loading && !isNewSearch) return;
@@ -118,6 +120,25 @@ export default function TransactionList({ type }) {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-slate-900"
                 />
+            </div>
+
+            {/* CSV Importer Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+                <button
+                    onClick={() => setShowImporter(!showImporter)}
+                    className="w-full p-3 flex justify-between items-center text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                    <span className="flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Importar Extrato (CSV/PDF)
+                    </span>
+                    <span>{showImporter ? 'Fechar' : 'Abrir'}</span>
+                </button>
+                {showImporter && (
+                    <div className="p-4 border-t border-slate-100">
+                        <FileImporter onImportSuccess={fetchTransactions} />
+                    </div>
+                )}
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">

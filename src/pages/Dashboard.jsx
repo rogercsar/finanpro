@@ -162,7 +162,7 @@ export default function Dashboard() {
                         <div className="w-2 h-6 bg-blue-500 rounded-full"></div>
                         Fluxo de Caixa (Mensal)
                     </h3>
-                    <div className="h-80">
+                    {monthlyData && monthlyData.length > 0 ? ( <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={monthlyData} barGap={8}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -176,7 +176,7 @@ export default function Dashboard() {
                                 <Bar dataKey="expense" name="Saídas" fill="#ef4444" radius={[6, 6, 0, 0]} maxBarSize={50} />
                             </BarChart>
                         </ResponsiveContainer>
-                    </div>
+                    </div>) : (<div className="h-80 flex items-center justify-center text-slate-400">Sem dados para exibir</div>)}
                 </div>
 
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
@@ -184,7 +184,7 @@ export default function Dashboard() {
                         <div className="w-2 h-6 bg-indigo-500 rounded-full"></div>
                         Despesas por Categoria
                     </h3>
-                    <div className="h-80">
+                    {categoryData && categoryData.length > 0 ? (<div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
@@ -204,7 +204,7 @@ export default function Dashboard() {
                                 <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                             </PieChart>
                         </ResponsiveContainer>
-                        <div className="flex flex-wrap gap-2 justify-center mt-4">
+                        <div className="flex flex-wrap gap-2 justify-center mt-4 max-h-20 overflow-y-auto">
                             {categoryData.map((entry, index) => (
                                 <div key={index} className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50 px-2 py-1 rounded-full">
                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
@@ -212,7 +212,7 @@ export default function Dashboard() {
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </div>) : (<div className="h-80 flex items-center justify-center text-slate-400">Sem dados para exibir</div>)}
                 </div>
             </div>
 
@@ -253,10 +253,7 @@ export default function Dashboard() {
             {/* Budget Manager and CSV Importer */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <BudgetManager budgets={budgets} />
-                <CSVImporter onImportSuccess={() => {
-                    // Refresh data after import
-                    window.location.reload();
-                }} />
+                {/* O CSVImporter foi movido para a página de transações para uma melhor experiência do usuário */}
             </div>
         </div>
     );
