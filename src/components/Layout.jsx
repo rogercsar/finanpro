@@ -51,7 +51,7 @@ export default function Layout() {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50/50 flex font-sans">
+        <div className="min-h-screen bg-slate-50/50 flex font-sans overflow-x-hidden">
             {/* Sidebar Desktop */}
             <aside className="hidden md:flex flex-col w-72 bg-white border-r border-slate-200/60 fixed h-full z-20 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]">
                 <div className="p-8 flex items-center justify-between">
@@ -170,7 +170,7 @@ export default function Layout() {
             )}
 
             {/* Main Content */}
-            <main className="flex-1 md:ml-72 p-4 md:p-8 pt-24 md:pt-8 min-h-screen transition-all bg-blue-50">
+            <main className="flex-1 md:ml-72 p-4 md:p-8 pt-20 md:pt-8 min-h-screen transition-all bg-blue-50">
                 <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <Outlet />
                 </div>

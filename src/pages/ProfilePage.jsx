@@ -97,8 +97,8 @@ export default function ProfilePage() {
       </div>
 
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 max-w-2xl">
-        <div className="flex gap-6">
-          <div className="w-28 h-28 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="w-28 h-28 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden mx-auto md:mx-0 flex-shrink-0">
             {preview ? (
               <img src={preview} alt="avatar" className="w-full h-full object-cover" />
             ) : (
@@ -106,7 +106,7 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             <label className="block text-sm text-slate-600 mb-2">Foto de perfil</label>
             <div className="flex items-center gap-3">
               <label className="btn-ghost flex items-center gap-2">
@@ -144,7 +144,7 @@ export default function ProfilePage() {
 
             <div className="mt-6 border-t border-slate-100 pt-4">
               <h4 className="text-sm font-semibold text-slate-700 mb-2">Alterar senha</h4>
-              <div className="flex gap-3 items-center">
+              <div className="flex flex-col sm:flex-row gap-3 items-center">
                 <input type="password" placeholder="Nova senha" className="px-3 py-2 border border-slate-200 rounded-lg flex-1 text-slate-900" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                 <button onClick={handleChangePassword} className="btn-primary"><Lock className="w-4 h-4 mr-2" /> Alterar</button>
               </div>
@@ -161,7 +161,7 @@ export default function ProfilePage() {
                   <UserPlus className="w-4 h-4" /> Convidar Usuário
                 </button>
               ) : (
-                <form onSubmit={handleSendInvite} className="mb-4 p-3 bg-slate-50 rounded-lg">
+                <form onSubmit={handleSendInvite} className="mb-4 p-3 bg-slate-50 rounded-lg animate-in fade-in duration-300">
                   <div className="flex gap-2">
                     <input
                       type="email"

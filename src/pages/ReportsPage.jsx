@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { format, parse, lastDayOfMonth } from 'date-fns';
+import { format, parse, lastDayOfMonth, startOfMonth } from 'date-fns';
+import {
+    PieChart,
+    Pie,
+    Cell,
+    ResponsiveContainer,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    Legend
+} from 'recharts';
 
 export default function ReportsPage() {
     const { user } = useAuth();
@@ -12,31 +24,19 @@ export default function ReportsPage() {
     useEffect(() => {
         const fetchReport = async () => {
             setLoading(true);
-            try {
-                console.log('Fetching report for user:', user?.id);
-                const startOfMonth = `${filterDate}-01`;
-                
-                // Get the actual last day of the month
-                const monthDate = parse(`${filterDate}-01`, 'yyyy-MM-dd', new Date());
-                const lastDay = lastDayOfMonth(monthDate);
-                const endOfMonth = format(lastDay, 'yyyy-MM-dd');
+            try {                
+                const monthDate = parse(filterDate, 'yyyy-MM', new Date());
+                const startDate = format(startOfMonth(monthDate), 'yyyy-MM-dd');
+                const endDate = format(lastDayOfMonth(monthDate), 'yyyy-MM-dd');
 
-                // First, let's check if there are ANY transactions
-                const { data: allTrans, error: allError } = await supabase
-                    .from('transactions')
-                    .select('*');
-                console.log('All transactions in DB:', allTrans, 'Error:', allError);
-
-                // Now filter by user
                 const { data, error } = await supabase
                     .from('transactions')
                     .select('*')
                     .eq('user_id', user?.id)
-                    .gte('date', startOfMonth)
-                    .lte('date', endOfMonth)
+                    .gte('date', startDate)
+                    .lte('date', endDate)
                     .order('date', { ascending: true });
 
-                console.log('User transactions:', data, 'Error:', error);
                 if (error) throw error;
                 setTransactions(data || []);
             } catch (error) {
@@ -57,9 +57,23 @@ export default function ReportsPage() {
         .filter(t => t.type === 'expense')
         .reduce((acc, t) => acc + Number(t.amount), 0);
 
+    const expenseByCategory = transactions
+        .filter(t => t.type === 'expense')
+        .reduce((acc, t) => {
+            acc[t.category] = (acc[t.category] || 0) + Number(t.amount);
+            return acc;
+        }, {});
+
+    const pieData = Object.entries(expenseByCategory)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+
+    const balanceData = [{ name: 'Balanço', income: totalIncome, expense: totalExpense }];
+    const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#64748b'];
+
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                 <h2 className="text-2xl font-bold text-slate-800">Relatório Mensal</h2>
                 <input
                     type="month"
@@ -68,6 +82,7 @@ export default function ReportsPage() {
                     className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900"
                 />
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                     <h3 className="text-sm font-semibold text-slate-600 mb-2">Total Entradas</h3>
@@ -82,6 +97,49 @@ export default function ReportsPage() {
                 <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-xl shadow-sm text-white">
                     <h3 className="text-sm font-semibold text-blue-100 mb-2">Saldo Real</h3>
                     <div className={`text-2xl font-bold ${ (totalIncome - totalExpense) >= 0 ? 'text-green-300' : 'text-red-300' }`}>R$ {(totalIncome - totalExpense).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                </div>
+            </div>
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 className="font-semibold text-slate-700 mb-4">Despesas por Categoria</h3>
+                    <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} labelLine={false}>
+                                    {pieData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center mt-4">
+                        {pieData.slice(0, 5).map((entry, index) => (
+                            <div key={index} className="flex items-center gap-1.5 text-xs text-slate-600">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                                {entry.name}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div className="lg:col-span-3 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 className="font-semibold text-slate-700 mb-4">Entradas vs. Saídas</h3>
+                    <div className="h-72">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={balanceData} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>
+                                <XAxis type="number" hide />
+                                <YAxis type="category" dataKey="name" hide />
+                                <Tooltip formatter={(value) => `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} cursor={{ fill: '#f8fafc' }} />
+                                <Legend iconType="circle" />
+                                <Bar dataKey="income" name="Entradas" fill="#10b981" radius={[0, 8, 8, 0]} barSize={40} />
+                                <Bar dataKey="expense" name="Saídas" fill="#ef4444" radius={[0, 8, 8, 0]} barSize={40} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             </div>
 
@@ -100,7 +158,6 @@ export default function ReportsPage() {
                             a.href = url; a.download = `relatorio-${filterDate}.csv`;
                             a.click();
                         }}>Exportar CSV</button>
-                        <button onClick={() => setFilterDate(new Date().toISOString().slice(0,7))} className="btn-ghost">Hoje</button>
                     </div>
                 </div>
                 <table className="w-full text-left text-sm">
@@ -114,23 +171,29 @@ export default function ReportsPage() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {transactions.map((t) => (
-                            <tr key={t.id} className="hover:bg-slate-50">
-                                <td className="px-6 py-3 text-slate-600">{format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}</td>
-                                <td className="px-6 py-3">
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        {loading ? (
+                            <tr><td colSpan="5" className="text-center p-8 text-slate-500">Carregando...</td></tr>
+                        ) : transactions.length === 0 ? (
+                            <tr><td colSpan="5" className="text-center p-8 text-slate-500">Nenhuma transação neste mês.</td></tr>
+                        ) : (
+                            transactions.map((t) => (
+                                <tr key={t.id} className="hover:bg-slate-50">
+                                    <td className="px-6 py-3 text-slate-600">{format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}</td>
+                                    <td className="px-6 py-3">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${t.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                            }`}>
+                                            {t.type === 'income' ? 'Entrada' : 'Saída'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-3 text-slate-600">{t.category}</td>
+                                    <td className="px-6 py-3 text-slate-600">{t.description}</td>
+                                    <td className={`px-6 py-3 text-right font-medium ${t.type === 'income' ? 'text-green-600' : 'text-red-600'
                                         }`}>
-                                        {t.type === 'income' ? 'Entrada' : 'Saída'}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-3 text-slate-600">{t.category}</td>
-                                <td className="px-6 py-3 text-slate-600">{t.description}</td>
-                                <td className={`px-6 py-3 text-right font-medium ${t.type === 'income' ? 'text-green-600' : 'text-red-600'
-                                    }`}>
-                                    R$ {Number(t.amount).toFixed(2)}
-                                </td>
-                            </tr>
-                        ))}
+                                        R$ {Number(t.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>

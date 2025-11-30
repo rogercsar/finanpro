@@ -142,17 +142,17 @@ export default function GoalsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Minhas Metas</h2>
-          <p className="text-slate-500 text-sm mt-1">Defina objetivos financeiros e acompanhe o progresso</p>
+          <h2 className="text-2xl font-bold text-slate-800 text-center sm:text-left">Minhas Metas</h2>
+          <p className="text-slate-500 text-sm mt-1 text-center sm:text-left">Defina objetivos financeiros e acompanhe o progresso</p>
         </div>
         <button
           onClick={() => {
             resetForm();
             setIsFormOpen(true);
           }}
-          className="btn-primary bg-blue-600 hover:bg-blue-700"
+          className="w-full sm:w-auto btn-primary bg-blue-600 hover:bg-blue-700"
         >
           <Plus className="w-5 h-5 mr-2" />
           Nova Meta
@@ -354,7 +354,7 @@ export default function GoalsPage() {
               </div>
 
               <div className="pt-4 flex gap-3">
-                <button
+                <button 
                   type="button"
                   onClick={resetForm}
                   className="btn-ghost flex-1"
