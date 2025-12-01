@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
 import { AIAdvisorProvider } from './context/AIAdvisorContext';
 import { AlertsProvider } from './context/AlertsContext';
 import Layout from './components/Layout';
@@ -19,6 +19,10 @@ import TransactionDetailPage from './pages/TransactionDetailPage';
 import SubscriptionDetailPage from './pages/SubscriptionDetailPage';
 import SharedReportPage from './components/SharedReportPage';
 import AIChatWidget from './components/AIChatWidgetNew';
+import { AuthProvider } from './context/AuthContext'; // Importação duplicada removida e CurrencyProvider adicionado
+import { CurrencyProvider } from './components/CurrencyContext';
+import CurrencySettingsPage from './components/CurrencySettingsPage'; // Importa a nova página
+
 
 function AppContent() {
   const { user } = useAuth();
@@ -46,6 +50,7 @@ function AppContent() {
             <Route path="goals/:id" element={<GoalDetailPage />} />
             <Route path="transactions/:id" element={<TransactionDetailPage />} />
             <Route path="subscriptions/:id" element={<SubscriptionDetailPage />} />
+            <Route path="settings/currency" element={<CurrencySettingsPage />} />
           </Route>
           <Route path="/share/report/:token" element={<SharedReportPage />} />
         </Routes>
@@ -58,9 +63,11 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AlertsProvider>
-        <AppContent />
-      </AlertsProvider>
+      <CurrencyProvider>
+        <AlertsProvider>
+          <AppContent />
+        </AlertsProvider>
+      </CurrencyProvider>
     </AuthProvider>
   );
 }

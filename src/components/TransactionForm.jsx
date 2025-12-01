@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { X } from 'lucide-react';
+import { useCurrency } from './CurrencyContext';
 
 export default function TransactionForm({ type, onClose, onSuccess, initialData = null }) {
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
+    const { baseCurrency } = useCurrency();
     const [goals, setGoals] = useState([]);
     const [formData, setFormData] = useState({
         amount: initialData?.amount || '',
@@ -15,6 +17,7 @@ export default function TransactionForm({ type, onClose, onSuccess, initialData 
         // and then taking only the date part. Avoids UTC conversion issues.
         date: initialData?.date || new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0],
         goal_id: initialData?.goal_id || '',
+        currency: initialData?.currency || baseCurrency,
     });
 
     const categories = type === 'income'
@@ -55,6 +58,7 @@ export default function TransactionForm({ type, onClose, onSuccess, initialData 
                 description: formData.description,
                 date: utcDate.toISOString().split('T')[0],
                 goal_id: formData.goal_id || null,
+                currency: formData.currency,
             };
 
             let error;
@@ -95,7 +99,7 @@ export default function TransactionForm({ type, onClose, onSuccess, initialData 
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-4 space-y-4">
-                    <div>
+                    <div className="grid grid-cols-3 gap-4">
                         <label className="block text-sm font-medium text-slate-700 mb-1">Valor</label>
                         <input
                             type="number"
@@ -103,9 +107,22 @@ export default function TransactionForm({ type, onClose, onSuccess, initialData 
                             required
                             value={formData.amount}
                             onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-900"
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-900 col-span-2"
                             placeholder="0,00"
                         />
+                        <select
+                            required
+                            value={formData.currency}
+                            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-slate-900"
+                        >
+                            <option value="BRL">R$</option>
+                            <option value="USD">U$</option>
+                            <option value="EUR">€</option>
+                        </select>
+                    </div>
+
+                    <div>
                     </div>
 
                     <div>

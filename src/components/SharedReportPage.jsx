@@ -21,7 +21,7 @@ export default function SharedReportPage() {
 
             try {
                 // Chama a função do banco de dados (RPC) para buscar os dados de forma segura
-                const { data, error } = await supabase.rpc('api.get_shared_report_data', {
+                const { data, error } = await supabase.rpc('get_shared_report_data', {
                     report_token: token,
                 });
 

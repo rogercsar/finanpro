@@ -139,7 +139,7 @@ A IA gera recomendações como:
 ### Transações
 ```javascript
 {
-  id, user_id, type, amount, category, 
+  id, user_id, type, amount, currency, category, 
   description, date, goal_id, created_at
 }
 ```

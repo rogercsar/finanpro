@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useAlerts } from '../context/AlertsContext';
 import { useNavigate } from 'react-router-dom';
+import { useCurrency } from '../components/CurrencyContext';
 import { analyzeFinances } from '../lib/financialAnalyzer';
 import {
     BarChart,
@@ -18,15 +19,21 @@ import {
     AreaChart,
     Area
 } from 'recharts';
-import { ArrowUpCircle, ArrowDownCircle, Wallet, TrendingUp, TrendingDown, Brain, ChevronRight } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Brain, ChevronRight, Landmark, DollarSign, Euro } from 'lucide-react';
 import BudgetManager from '../components/BudgetManager';
-import CSVImporter from '../components/CSVImporter';
 
 export default function Dashboard() {
     const { user } = useAuth();
     const { budgets } = useAlerts();
+    const { baseCurrency, exchangeRates, loading: currencyLoading } = useCurrency();
     const navigate = useNavigate();
+
+    // Estado para os totais convertidos para a moeda base
     const [summary, setSummary] = useState({ income: 0, expense: 0, balance: 0 });
+    
+    // Estado para os saldos individuais de cada moeda
+    const [currencyBalances, setCurrencyBalances] = useState({});
+
     const [monthlyData, setMonthlyData] = useState([]);
     const [categoryData, setCategoryData] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -34,7 +41,7 @@ export default function Dashboard() {
 
     const fetchDashboardData = async () => {
         setLoading(true);
-        try {
+        try { // Adicionado 'currency' ao select
             const { data: transactions, error } = await supabase
                 .from('transactions')
                 .select('*')
@@ -42,48 +49,80 @@ export default function Dashboard() {
 
             if (error) throw error;
 
-            // Calculate totals
-            const income = transactions
-                .filter(t => t.type === 'income')
-                .reduce((acc, curr) => acc + Number(curr.amount), 0);
-
-            const expense = transactions
-                .filter(t => t.type === 'expense')
-                .reduce((acc, curr) => acc + Number(curr.amount), 0);
-
-            setSummary({
-                income,
-                expense,
-                balance: income - expense
-            });
-
-            // Prepare Chart Data (Last 6 months)
+            // --- Lógica de Conversão e Cálculo ---
+            let totalIncomeConverted = 0;
+            let totalExpenseConverted = 0;
+            const balancesByCurrency = {};
             const months = {};
+            const categories = {};
+
             transactions.forEach(t => {
+                const amount = Number(t.amount);
+                const currency = t.currency || baseCurrency;
+
+                // Inicializa o saldo para a moeda se ainda não existir
+                if (!balancesByCurrency[currency]) {
+                    balancesByCurrency[currency] = 0;
+                }
+
+                // Calcula o saldo por moeda
+                if (t.type === 'income') {
+                    balancesByCurrency[currency] += amount;
+                } else {
+                    balancesByCurrency[currency] -= amount;
+                }
+
+                // Converte o valor para a moeda base para os totais e gráficos
+                const rate = currency === baseCurrency ? 1 : (exchangeRates[currency] || 1);
+                const convertedAmount = amount * rate;
+
+                if (t.type === 'income') {
+                    totalIncomeConverted += convertedAmount;
+                } else {
+                    totalExpenseConverted += convertedAmount;
+                }
+
+                // Prepara dados para o gráfico de fluxo de caixa (mensal)
                 const date = new Date(t.date);
                 const key = `${date.getMonth() + 1}/${date.getFullYear()}`;
                 if (!months[key]) months[key] = { name: key, income: 0, expense: 0 };
-                if (t.type === 'income') months[key].income += Number(t.amount);
-                else months[key].expense += Number(t.amount);
-            });
-            setMonthlyData(Object.values(months).slice(-6));
+                if (t.type === 'income') {
+                    months[key].income += convertedAmount;
+                } else {
+                    months[key].expense += convertedAmount;
+                }
 
-            // Category Data
-            const categories = {};
-            transactions.filter(t => t.type === 'expense').forEach(t => {
-                if (!categories[t.category]) categories[t.category] = 0;
-                categories[t.category] += Number(t.amount);
+                // Prepara dados para o gráfico de despesas por categoria
+                if (t.type === 'expense') {
+                    if (!categories[t.category]) categories[t.category] = 0;
+                    categories[t.category] += convertedAmount;
+                }
             });
+
+            // Atualiza os estados
+            setSummary({
+                income: totalIncomeConverted,
+                expense: totalExpenseConverted,
+                balance: totalIncomeConverted - totalExpenseConverted
+            });
+            setCurrencyBalances(balancesByCurrency);
+            setMonthlyData(Object.values(months).slice(-6));
             setCategoryData(Object.entries(categories).map(([name, value]) => ({ name, value })));
 
-            // Analyze with AI
+            // Analisa com IA usando os dados convertidos
             const { data: goalsData } = await supabase
                 .from('goals')
                 .select('*')
                 .eq('user_id', user?.id);
             
             if (transactions.length > 0) {
-                const analysisResult = analyzeFinances(transactions, goalsData || []);
+                // Mapeia transações para incluir valores convertidos para a análise
+                const transactionsForAnalysis = transactions.map(t => ({
+                    ...t,
+                    amount: t.amount * (t.currency === baseCurrency ? 1 : (exchangeRates[t.currency] || 1))
+                }));
+
+                const analysisResult = analyzeFinances(transactionsForAnalysis, goalsData || []);
                 setAnalysis(analysisResult);
             }
 
@@ -96,12 +135,25 @@ export default function Dashboard() {
 
     useEffect(() => {
         if (user) fetchDashboardData();
-    }, [user]);
+    }, [user, baseCurrency, exchangeRates]); // Roda novamente se a moeda base ou taxas mudarem
 
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
+    // Helper para formatar moeda
+    const formatCurrency = (value, currencyCode) => {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: currencyCode,
+        }).format(value);
+    };
+
+    if (loading || currencyLoading) {
+        return <div className="text-center p-8">Carregando dados do dashboard...</div>;
+    }
+
     return (
-        <div className="space-y-8 bg-blue-50 dark:bg-transparent p-6 rounded-xl">
+        // Removido padding para melhor controle
+        <div className="space-y-8">
             <div>
                 <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Dashboard</h2>
                 <p className="text-slate-500 dark:text-slate-400 mt-1">Visão geral das suas finanças</p>
@@ -118,7 +170,7 @@ export default function Dashboard() {
                         <div>
                             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Entradas</p>
                             <h3 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-1">
-                                R$ {summary.income.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                {formatCurrency(summary.income, baseCurrency)}
                             </h3>
                         </div>
                     </div>
@@ -133,7 +185,7 @@ export default function Dashboard() {
                         <div>
                             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Saídas</p>
                             <h3 className="text-3xl font-bold text-slate-800 dark:text-slate-100 mt-1">
-                                R$ {summary.expense.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                {formatCurrency(summary.expense, baseCurrency)}
                             </h3>
                         </div>
                     </div>
@@ -148,11 +200,42 @@ export default function Dashboard() {
                         <div>
                             <p className="text-sm text-blue-100 font-medium uppercase tracking-wider">Saldo Atual</p>
                             <h3 className="text-3xl font-bold text-white mt-1">
-                                R$ {summary.balance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                {formatCurrency(summary.balance, baseCurrency)}
                             </h3>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Cards de Saldo por Moeda */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {Object.entries(currencyBalances).map(([currency, balance]) => {
+                    if (balance === 0 && currency !== baseCurrency) return null; // Não mostra moedas com saldo zero, exceto a principal
+
+                    const currencyInfo = {
+                        BRL: { icon: Landmark, color: 'text-green-600' },
+                        USD: { icon: DollarSign, color: 'text-blue-600' },
+                        EUR: { icon: Euro, color: 'text-yellow-600' },
+                    };
+                    const Icon = currencyInfo[currency]?.icon || Landmark;
+
+                    return (
+                        <div key={currency} className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                            <div className={`p-2 bg-slate-100 dark:bg-slate-800 rounded-lg ${currencyInfo[currency]?.color}`}>
+                                <Icon className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Saldo em {currency}</p>
+                                <h4 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                                    {new Intl.NumberFormat('pt-BR', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    }).format(balance)}
+                                </h4>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
             {/* Charts */}

@@ -14,7 +14,8 @@ import {
     Target,
     Brain,
     Calculator,
-    Repeat
+    Repeat,
+    Settings
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useState, useEffect } from 'react';
@@ -54,6 +55,7 @@ export default function Layout() {
         { path: '/subscriptions', label: 'Assinaturas', icon: Repeat },
         { path: '/simulator', label: 'Simulador', icon: Calculator },
         { path: '/profile', label: 'Perfil', icon: Wallet },
+        { path: '/settings/currency', label: 'Moedas', icon: Settings },
     ];
 
     const getHealthBorderColor = () => {

@@ -6,6 +6,12 @@ import { Pencil, Trash2, Plus, Search, Upload, FileText } from 'lucide-react';
 import TransactionForm from './TransactionForm';
 import FileImporter from './FileImporter';
 
+const currencySymbols = {
+    BRL: 'R$',
+    USD: 'U$',
+    EUR: '€',
+};
+
 const TRANSACTIONS_PER_PAGE = 15;
 
 export default function TransactionList({ type }) {
@@ -168,7 +174,7 @@ export default function TransactionList({ type }) {
                                         </span>
                                     </td>
                                     <td className={`px-6 py-4 text-right font-semibold ${type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                                        R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                        {currencySymbols[t.currency] || 'R$'} {Number(t.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex justify-end gap-2"> 
@@ -192,7 +198,7 @@ export default function TransactionList({ type }) {
                                     <p className="text-sm text-slate-500 dark:text-slate-400">{format(new Date(`${t.date}T00:00:00`), 'dd/MM/yyyy')}</p>
                                 </div>
                                 <p className={`font-bold text-lg ${type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                                    R$ {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    {currencySymbols[t.currency] || 'R$'} {t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                 </p>
                             </div>
                             <div className="flex justify-between items-center mt-2">
