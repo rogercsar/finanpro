@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAlerts } from './AlertsContext';
 import { useAuth } from './AuthContext';
@@ -28,13 +28,14 @@ export function AIAdvisorProvider({ children }) {
     const [loading, setLoading] = useState(false);
     const [lastRecommendationAlertTime, setLastRecommendationAlertTime] = useState(0);
     const [achievements, setAchievements] = useState([]);
+    const [refreshTrigger, setRefreshTrigger] = useState(0); // Novo estado para forçar refresh
 
     // Fetch analysis dados
     useEffect(() => {
         if (user && activeProfile) { // 3. Garantir que o perfil ativo exista antes de buscar
             fetchAnalysis();
         }
-    }, [user, activeProfile]); // 4. Adicionar activeProfile como dependência
+    }, [user, activeProfile, refreshTrigger]); // Adicionar refreshTrigger como dependência
 
     // Fetch achievements
     useEffect(() => {
@@ -49,9 +50,7 @@ export function AIAdvisorProvider({ children }) {
 
     // Update contextual advice based on current page
     useEffect(() => {
-        if (analysis) {
-            updateContextualAdvice(location.pathname);
-        }
+        // A lógica de conselhos contextuais foi completamente removida para evitar mensagens automáticas.
     }, [location, analysis]);
 
     // Generate alerts based on analysis changes
@@ -96,7 +95,7 @@ export function AIAdvisorProvider({ children }) {
             const sixMonthsAgo = new Date();
             sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-            const [{ data: transData }, { data: goalsData }] = await Promise.all([
+            const [{ data: transData }, { data: goalsData }, { data: subsData }] = await Promise.all([
                 supabase
                     .from('transactions')
                     .select('*')
@@ -107,21 +106,58 @@ export function AIAdvisorProvider({ children }) {
                     .from('goals')
                     .select('*')
                     .eq('user_id', user?.id)
+                    .eq('profile_id', activeProfile.id),
+                // 1. Busca as assinaturas junto com o resto dos dados
+                supabase
+                    .from('subscriptions')
+                    .select('name, next_payment_date')
+                    .eq('user_id', user?.id)
                     .eq('profile_id', activeProfile.id)
             ]);
 
-            if (transData && transData.length > 0) {
-                const result = analyzeFinances(transData, goalsData || []);
+            // Sempre chamar analyzeFinances e setAnalysis, mesmo que transData seja vazio.
+            // Isso garante que 'analysis' nunca seja null se activeProfile existir.
+            const result = analyzeFinances(transData || [], goalsData || []);
 
-                setPreviousAnalysis(analysis);
-                setAnalysis(result);
-                checkAchievements(result, transData, goalsData); // <-- Lógica de Gamificação
-            }
+            setPreviousAnalysis(analysis); // Captura o estado anterior
+            setAnalysis(result); // Atualiza com o novo resultado (pode ser vazio)
+            checkAchievements(result, transData || [], goalsData || []); // Lógica de Gamificação
+            
+            // Verifica as assinaturas após a análise
+            checkSubscriptionDueDates(subsData || []);
         } catch (error) {
             console.error('Error fetching analysis:', error);
         } finally {
             setLoading(false);
         }
+    };
+
+    // 3. Nova função para verificar e criar alertas de assinaturas
+    const checkSubscriptionDueDates = async (subscriptions) => {
+        const today = new Date();
+        const alertThresholdInDays = 3; // Alerta com 3 dias de antecedência
+        const notifiedSubscriptions = new Set(JSON.parse(sessionStorage.getItem('notifiedSubscriptions') || '[]'));
+
+        for (const sub of subscriptions) {
+            if (!sub.next_payment_date || notifiedSubscriptions.has(sub.name)) {
+                continue;
+            }
+
+            const paymentDate = new Date(sub.next_payment_date + 'T00:00:00');
+            const diffTime = paymentDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays >= 0 && diffDays <= alertThresholdInDays) {
+                await createAlert(
+                    'subscription_due',
+                    '🔔 Assinatura Próxima',
+                    `Seu pagamento de ${sub.name} vence em ${diffDays === 0 ? 'hoje' : `${diffDays} dia(s)`}.`,
+                    'medium'
+                );
+                notifiedSubscriptions.add(sub.name);
+            }
+        }
+        sessionStorage.setItem('notifiedSubscriptions', JSON.stringify([...notifiedSubscriptions]));
     };
 
     const checkAchievements = async (currentAnalysis, transactions, goals) => {
@@ -217,6 +253,11 @@ export function AIAdvisorProvider({ children }) {
         }
     };
 
+    const refreshAnalysis = useCallback(() => {
+        console.log("Forçando a atualização da análise...");
+        setRefreshTrigger(prev => prev + 1);
+    }, []);
+
     // Create transaction through AI
     const createTransaction = async (type, amount, category, description = '', date = null) => {
         let transactionDate = date;
@@ -256,7 +297,7 @@ export function AIAdvisorProvider({ children }) {
                 );
             }
 
-            await fetchAnalysis(); // Refresh analysis
+            refreshAnalysis(); // Refresh analysis
             return { success: true, message: `✅ ${type === 'income' ? 'Entrada' : 'Saída'} de R$ ${amount} criada!` };
         } catch (error) {
             console.error('Error creating transaction:', error);
@@ -295,100 +336,12 @@ export function AIAdvisorProvider({ children }) {
                 );
             }
 
-            await fetchAnalysis(); // Refresh analysis
+            refreshAnalysis(); // Refresh analysis
             return { success: true, message: `✅ Meta "${name}" criada com target de R$ ${targetAmount}!` };
         } catch (error) {
             console.error('Error creating goal:', error);
             return { success: false, message: `❌ Erro ao criar meta: ${error.message}` };
         }
-    };
-
-    const updateContextualAdvice = (pathname) => {
-        if (!analysis) return;
-
-        let advice = null;
-
-        switch (pathname) {
-            case '/':
-                advice = {
-                    page: 'Dashboard',
-                    title: 'Visão Geral Financeira',
-                    message: `Seu score de saúde financeira está em ${analysis.healthScore}/100. ${analysis.insights[0] || 'Continue monitorando seus gastos!'}`,
-                    action: analysis.recommendations[0] || null,
-                    icon: '📊'
-                };
-                break;
-
-            case '/income':
-                const incomeRecommendation = analysis.recommendations.find(r => r.type === 'economia');
-                advice = {
-                    page: 'Entradas',
-                    title: 'Dica para Entradas',
-                    message: `Sua renda total é R$ ${analysis.summary.totalIncome.toFixed(2)}. ${analysis.insights.filter(i => i.includes('Parabéns'))[0] || 'Aumente suas fontes de renda!'}`,
-                    action: incomeRecommendation,
-                    icon: '💰'
-                };
-                break;
-
-            case '/expenses':
-                const expenseRecommendation = analysis.recommendations.find(r => r.type === 'otimizacao');
-                const expensive = Object.entries(analysis.patterns)
-                    .sort(([, a], [, b]) => b.average - a.average)[0];
-                advice = {
-                    page: 'Saídas',
-                    title: 'Otimize Seus Gastos',
-                    message: `Você gasta R$ ${analysis.summary.totalExpenses.toFixed(2)}/mês. Sua maior despesa é ${expensive ? expensive[0] : 'variável'} com média de R$ ${expensive ? expensive[1].average.toFixed(2) : '0'}.`,
-                    action: expenseRecommendation,
-                    icon: '💸'
-                };
-                break;
-
-            case '/reports':
-                advice = {
-                    page: 'Relatórios',
-                    title: 'Análise Mensal',
-                    message: `Taxa de poupança: ${analysis.summary.savingsRate}%. ${analysis.summary.savingsRate >= 20 ? '✅ Excelente!' : '⚠️ Procure aumentar para 20%.'}`,
-                    icon: '📈'
-                };
-                break;
-
-            case '/goals':
-                advice = {
-                    page: 'Metas',
-                    title: 'Acompanhe Suas Metas',
-                    message: 'Defina metas realistas e use a IA para acompanhar seu progresso. Cada meta concluída aumenta sua saúde financeira!',
-                    icon: '🎯'
-                };
-                break;
-
-            case '/profile':
-                advice = {
-                    page: 'Perfil',
-                    title: 'Seu Perfil',
-                    message: 'Configure seu perfil e acompanhe suas metas compartilhadas. Quanto mais dados, mais precisas serão as recomendações!',
-                    icon: '👤'
-                };
-                break;
-
-            case '/advisor':
-                advice = {
-                    page: 'Assistente IA',
-                    title: 'Análise Completa',
-                    message: 'Explore a análise completa de seus padrões, anomalias detectadas e previsões para o próximo mês.',
-                    icon: '🧠'
-                };
-                break;
-
-            default:
-                advice = {
-                    page: 'FinanIA',
-                    title: 'Bem-vindo!',
-                    message: 'Navegue pela plataforma e eu estarei aqui com dicas personalizadas para cada seção.',
-                    icon: '👋'
-                };
-        }
-
-        setContextualAdvice(advice);
     };
 
     return (
@@ -401,7 +354,9 @@ export function AIAdvisorProvider({ children }) {
             fetchAnalysis,
             createTransaction,
             createGoal,
-            achievements
+            achievements,
+            refreshAnalysis,
+            activeProfile // Expor o perfil ativo
         }}>
             {children}
         </AIAdvisorContext.Provider>

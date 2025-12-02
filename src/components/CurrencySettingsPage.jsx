@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext'; // Usar o contexto de perfil
 import { useCurrency } from '../context/CurrencyContext';
 import { DollarSign, Euro, Save } from 'lucide-react';
 
@@ -11,10 +11,11 @@ const currencyOptions = [
 ];
 
 export default function CurrencySettingsPage() {
-  const { user } = useAuth();
+  const { activeProfile, updateProfile } = useProfile(); // Obter perfil ativo e função de update
   const { baseCurrency, exchangeRates, fetchCurrencySettings, loading } = useCurrency();
   
   const [localBaseCurrency, setLocalBaseCurrency] = useState(baseCurrency);
+  const [wantsWeeklySummary, setWantsWeeklySummary] = useState(false);
   const [localRates, setLocalRates] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
@@ -25,25 +26,27 @@ export default function CurrencySettingsPage() {
       EUR: exchangeRates.EUR || '',
     };
     setLocalRates(initialRates);
-  }, [baseCurrency, exchangeRates]);
+    setWantsWeeklySummary(activeProfile?.weekly_summary_email || false);
+  }, [baseCurrency, exchangeRates, activeProfile]);
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
 
-    // 1. Salvar moeda base no perfil
-    await supabase
-      .from('profiles')
-      .update({ base_currency: localBaseCurrency })
-      .eq('id', user.id);
+    // 1. Salvar configurações no perfil
+    await updateProfile({
+      base_currency: localBaseCurrency,
+      weekly_summary_email: wantsWeeklySummary,
+    });
 
     // 2. Salvar (ou atualizar) taxas de câmbio
+    // (Esta lógica precisa ser ajustada para usar o user.id correto)
     for (const currencyCode of ['USD', 'EUR']) {
       const rateValue = parseFloat(localRates[currencyCode]);
       if (rateValue > 0) {
         await supabase
           .from('user_exchange_rates')
           .upsert({
-            user_id: user.id,
+            user_id: activeProfile.user_id,
             target_currency: currencyCode,
             rate: rateValue,
           }, { onConflict: 'user_id, target_currency' });
@@ -52,7 +55,7 @@ export default function CurrencySettingsPage() {
         await supabase
           .from('user_exchange_rates')
           .delete()
-          .match({ user_id: user.id, target_currency: currencyCode });
+          .match({ user_id: activeProfile.user_id, target_currency: currencyCode });
       }
     }
 
@@ -81,6 +84,24 @@ export default function CurrencySettingsPage() {
         >
           {currencyOptions.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
         </select>
+      </div>
+
+      <div className="bg-white dark:bg-slate-800/50 p-6 rounded-2xl shadow-sm">
+        <h2 className="text-xl font-semibold mb-4">Notificações por Email</h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-medium text-slate-800 dark:text-slate-200">Resumo Semanal</p>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              Receba um resumo de suas finanças toda segunda-feira.
+            </p>
+          </div>
+          <button
+            onClick={() => setWantsWeeklySummary(!wantsWeeklySummary)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${wantsWeeklySummary ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-600'}`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${wantsWeeklySummary ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-slate-800/50 p-6 rounded-2xl shadow-sm">

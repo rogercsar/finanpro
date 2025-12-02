@@ -25,11 +25,12 @@ import ThemeToggle from './ThemeToggle';
 import { useState, useEffect } from 'react';
 import clsx from 'clsx';
 import CreateProfileModal from './CreateProfileModal';
+import AIChatWidgetNew from './AIChatWidgetNew'; // Importando o widget
 
 export default function Layout() {
     const { signOut, user } = useAuth();
     const location = useLocation();
-    const { analysis } = useAIAdvisor();
+    const { analysis, refreshAnalysis } = useAIAdvisor(); // Pega refreshAnalysis
     const { profiles, activeProfile, switchProfile } = useProfile();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -60,6 +61,10 @@ export default function Layout() {
             document.body.style.overflow = 'auto'; // Cleanup on component unmount
         };
     }, [isMobileMenuOpen]);
+
+    useEffect(() => {
+        if (activeProfile && refreshAnalysis) refreshAnalysis(); // Força refresh da análise ao mudar perfil
+    }, [activeProfile, refreshAnalysis]);
 
     const navItems = [
         { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -276,6 +281,10 @@ export default function Layout() {
                     }}
                 />
             )}
+
+            {/* Renderiza o Chat Widget aqui */}
+            <AIChatWidgetNew />
+
         </div>
     );
 }

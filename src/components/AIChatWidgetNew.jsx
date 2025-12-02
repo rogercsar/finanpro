@@ -1,20 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAIAdvisor } from '../context/AIAdvisorContext';
 import { useAuth } from '../context/AuthContext';
 import { useChatHistory } from '../hooks/useChatHistory';
+import { supabase } from '../lib/supabase'; // Importar o Supabase
 import { 
-    MessageCircle, X, Send, Lightbulb, ChevronRight, 
-    Zap, TrendingUp, AlertCircle, Brain, Volume2, RotateCcw, Plus
+    X, Send, Brain, Volume2, RotateCcw, Plus, TrendingUp, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import VoiceInputButton from './VoiceInputButton';
 
 export default function AIChatWidget() {
     const { user } = useAuth();
     const { analysis, contextualAdvice, isOpen, setIsOpen, loading, createTransaction, createGoal } = useAIAdvisor();
-    const { saveMessage, loadChatHistory } = useChatHistory(user?.id);
+    const { saveMessage, loadChatHistory, deleteMessage } = useChatHistory(user?.id);
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
     const [showForm, setShowForm] = useState(null); // 'income', 'expense', 'goal'
     const [formData, setFormData] = useState({ 
         amount: '', 
@@ -26,6 +28,22 @@ export default function AIChatWidget() {
         deadline: '' 
     });
     const navigate = useNavigate();
+    const chatContainerRef = useRef(null);
+
+    // Usamos uma ref para garantir que a função de resposta sempre tenha acesso à análise mais recente
+    const analysisRef = useRef(analysis);
+    useEffect(() => {
+        analysisRef.current = analysis;
+    }, [analysis]);
+
+    // Componente para o efeito de "digitando"
+    const TypingIndicator = () => (
+        <div className="flex items-center gap-2 p-2">
+            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        </div>
+    );
 
     // Initialize chat with welcome message
     useEffect(() => { 
@@ -34,6 +52,7 @@ export default function AIChatWidget() {
                 if (history.length > 0) {
                     setMessages(history.map(h => ({
                         text: h.message_text,
+                        id: h.id, // Assumindo que o histórico retorna um ID
                         sender: h.sender,
                         timestamp: new Date(h.timestamp)
                     })));
@@ -41,6 +60,7 @@ export default function AIChatWidget() {
                     addMessage({
                         text: '👋 Olá! Sou sua Assistente Financeira. Posso ajudá-lo a:\n💰 Registrar entradas\n💸 Registrar saídas\n🎯 Criar metas\n📊 Analisar suas finanças',
                         sender: 'ai',
+                        id: 'welcome_message', // Fixed ID for welcome message
                         timestamp: new Date()
                     });
                 }
@@ -48,103 +68,124 @@ export default function AIChatWidget() {
         }
     }, [isOpen]);
 
-    // Update chat when contextual advice changes
+    // Efeito para rolar o chat para o final quando novas mensagens chegam
     useEffect(() => {
-        if (isOpen && contextualAdvice && messages.length > 0) {
-            const lastMessage = messages[messages.length - 1];
-            if (!lastMessage.text.includes(contextualAdvice.page)) {
-                addMessage({
-                    text: `${contextualAdvice.icon} ${contextualAdvice.title}\n\n${contextualAdvice.message}`,
-                    sender: 'ai',
-                    contextual: true,
-                    action: contextualAdvice.action,
-                    timestamp: new Date()
-                });
-            }
-        }
-    }, [contextualAdvice]);
+        chatContainerRef.current?.scrollTo(0, chatContainerRef.current.scrollHeight);
+    }, [messages]);
 
     const addMessage = (message) => {
-        setMessages(prev => [...prev, message]);
-        if (user?.id) {
+        setMessages(prev => [...prev, { ...message, id: message.id || Date.now() }]);
+        
+        // Salva a mensagem do usuário sempre.
+        if (user?.id && message.sender === 'user') {
             saveMessage(message.text, message.sender);
         }
     };
 
-    const handleSendMessage = (e) => {
-        e.preventDefault();
-        if (!inputValue.trim()) return;
+    const handleSendMessage = (e, quickActionText = null) => {
+        if (e) e.preventDefault();
+        
+        const text = quickActionText || inputValue;
+        if (!text.trim()) return;
 
         // Add user message
         addMessage({
-            text: inputValue,
+            text: text,
             sender: 'user',
             timestamp: new Date()
         });
 
-        // Generate AI response based on input
-        const response = generateAIResponse(inputValue);
-        setTimeout(() => {
-            addMessage({
-                text: response.text,
-                sender: 'ai',
-                timestamp: new Date(),
-                action: response.action
-            });
-        }, 300);
+        // Adiciona a mensagem de "digitando"
+        const thinkingMessage = { id: `temp_${Date.now()}`, text: <TypingIndicator />, sender: 'ai', timestamp: new Date() };
+        setMessages(prev => [...prev, thinkingMessage]);
+
+        // Lógica de resposta com espera pela análise
+        const tryToAnswer = () => {
+            const response = generateAIResponse(text, analysisRef.current);
+            
+            // Se a resposta for para abrir um formulário, não salva a mensagem da IA
+            if (response.action === 'show_form') {
+                 setMessages(prev => prev.filter(m => m.id !== thinkingMessage.id)); // Remove "digitando"
+            } else {
+                const aiMessage = { id: thinkingMessage.id, text: response.text, sender: 'ai', timestamp: new Date() };
+                setMessages(prev => prev.map(m => m.id === thinkingMessage.id ? aiMessage : m));
+                if (typeof response.text === 'string') {
+                    saveMessage(response.text, 'ai'); // Salva a resposta da IA no histórico
+                }
+            }
+        };
+
+        // Simula um pequeno delay para o "pensamento" da IA
+        setTimeout(tryToAnswer, 500);
 
         setInputValue('');
     };
 
-    const generateAIResponse = (userInput) => {
+    const generateAIResponse = (userInput, currentAnalysis) => {
         const lower = userInput.toLowerCase();
 
-        // Check for creation commands
-        if (lower.includes('criar') && lower.includes('entrada')) {
+        // ETAPA 1: Comandos de Ação (abrir formulário)
+        if (lower.match(/registrar entrada|nova entrada|criar entrada/)) {
             setShowForm('income');
-            return { text: '💰 Vou ajudá-lo a registrar uma entrada!' };
+            return { text: 'Ok! Preencha os dados da nova entrada abaixo.', action: 'show_form' };
         }
-        if (lower.includes('criar') && lower.includes('saída')) {
+        if (lower.match(/registrar saída|nova saída|criar saída|registrar gasto/)) {
             setShowForm('expense');
-            return { text: '💸 Vou ajudá-lo a registrar uma saída!' };
+            return { text: 'Ok! Preencha os dados da nova saída abaixo.', action: 'show_form' };
         }
-        if (lower.includes('registrar') && lower.includes('gasto')) {
-            setShowForm('expense');
-            return { text: '💸 Vou ajudá-lo a registrar um gasto!' };
-        }
-        if (lower.includes('criar') && (lower.includes('meta') || lower.includes('objetivo'))) {
+        if (lower.match(/nova meta|criar meta/)) {
             setShowForm('goal');
-            return { text: '🎯 Vou ajudá-lo a criar uma nova meta!' };
+            return { text: 'Ok! Preencha os dados da nova meta abaixo.', action: 'show_form' };
+        }
+        if (lower.match(/nova assinatura|registrar assinatura/)) {
+            return { text: 'Para adicionar uma nova assinatura, por favor, use o botão "Nova Assinatura" na página de Assinaturas.' };
         }
 
-        // Analyze keywords
-        if (lower.includes('gastar') || lower.includes('gasto') || lower.includes('expense')) {
-            return { text: `💸 Seus gastos totais são R$ ${analysis?.summary.totalExpenses.toFixed(2) || '0'}/mês. Gostaria de registrar um novo gasto?` };
-        }
-        if (lower.includes('poupar') || lower.includes('economia') || lower.includes('save')) {
-            return { text: `💚 Você está poupando ${analysis?.summary.savingsRate || 0}% da sua renda. Seu target deveria ser 20%. Quer ver recomendações?` };
-        }
-        if (lower.includes('renda') || lower.includes('income') || lower.includes('ganho')) {
-            return { text: `📈 Sua renda total é R$ ${analysis?.summary.totalIncome.toFixed(2) || '0'}. Gostaria de registrar uma nova entrada?` };
-        }
-        if (lower.includes('meta') || lower.includes('goal') || lower.includes('objetivo')) {
-            return { text: `🎯 As metas ajudam a manter o foco! Gostaria de criar uma nova meta?` };
-        }
-        if (lower.includes('anômalo') || lower.includes('estranho') || lower.includes('anomal')) {
-            return { text: `🚨 Detectei ${analysis?.anomalies.length || 0} gastos anormais. Quer revisar?` };
-        }
-        if (lower.includes('recomendação') || lower.includes('dica') || lower.includes('sugestão')) {
-            const rec = analysis?.recommendations[0];
-            return { text: `💡 Minha recomendação: ${rec?.title}\n\n${rec?.description}` };
-        }
-        if (lower.includes('saúde') || lower.includes('score') || lower.includes('health')) {
-            return { text: `💚 Seu score de saúde financeira é ${analysis?.healthScore || 0}/100. ${analysis?.healthScore >= 70 ? '✅ Excelente!' : '⚠️ Podemos melhorar!'}` };
-        }
-        if (lower.includes('próximo mês') || lower.includes('previsão') || lower.includes('forecast')) {
-            return { text: `🔮 Previsão para o próximo mês: R$ ${analysis?.forecastMonthly?.total.toFixed(2) || '0'} de gastos.` };
+        // ETAPA 2: Consultas de Dados
+        if (!currentAnalysis) {
+            return { text: "Ainda estou carregando seus dados. Por favor, tente novamente em um instante." };
         }
 
-        return { text: `😊 Entendi! Diga-me se quer:\n✅ Criar entrada\n✅ Criar saída\n✅ Criar meta\n✅ Ver análise\n\nOu faça outra pergunta!` };
+        if (lower.match(/ver saldo/)) {
+            const balance = (currentAnalysis.summary.totalIncome || 0) - (currentAnalysis.summary.totalExpenses || 0);
+            return { text: `Seu saldo atual neste mês é de R$ ${balance.toFixed(2)}.` };
+        }
+        if (lower.match(/ver moedas/)) {
+            return { text: "Para ver e configurar moedas, por favor, vá para a seção 'Moedas' no menu de configurações." };
+        }
+        if (lower.match(/ver relatórios/)) {
+            const { totalIncome = 0, totalExpenses = 0 } = currentAnalysis.summary;
+            return { text: `📊 Relatório rápido:\n- Entradas: R$ ${totalIncome.toFixed(2)}\n- Saídas: R$ ${totalExpenses.toFixed(2)}` };
+        }
+        if (lower.match(/ver conquistas/)) {
+            if (!currentAnalysis.achievements || currentAnalysis.achievements.length === 0) return { text: "Você ainda não desbloqueou nenhuma conquista." };
+            const list = currentAnalysis.achievements.map(a => `- 🏆 ${a.name}`).join('\n');
+            return { text: `🏅 Suas conquistas:\n${list}` };
+        }
+        if (lower.match(/ver entradas/)) {
+            const incomes = (currentAnalysis.transactions || []).filter(t => t.type === 'income').slice(0, 3);
+            if (incomes.length === 0) return { text: "Não encontrei nenhuma entrada recente." };
+            const list = incomes.map(t => `- ${t.description || t.category}: R$ ${t.amount.toFixed(2)}`).join('\n');
+            return { text: `💰 Suas últimas entradas:\n${list}` };
+        }
+        if (lower.match(/ver saídas/)) {
+            const expenses = (currentAnalysis.transactions || []).filter(t => t.type === 'expense').slice(0, 3);
+            if (expenses.length === 0) return { text: "Não encontrei nenhuma saída recente." };
+            const list = expenses.map(t => `- ${t.description || t.category}: R$ ${t.amount.toFixed(2)}`).join('\n');
+            return { text: `💸 Suas últimas saídas:\n${list}` };
+        }
+        if (lower.match(/ver metas/)) {
+            if (!currentAnalysis.goals || currentAnalysis.goals.length === 0) return { text: "Você ainda não tem metas cadastradas." };
+            const list = currentAnalysis.goals.map(g => `- ${g.name}: ${((g.current_amount / g.target_amount) * 100).toFixed(0)}%`).join('\n');
+            return { text: `🎯 O progresso de suas metas é:\n${list}` };
+        }
+        if (lower.match(/ver assinaturas/)) {
+            if (!currentAnalysis.subscriptions || currentAnalysis.subscriptions.length === 0) return { text: "Você ainda não tem nenhuma assinatura registrada." };
+            const list = currentAnalysis.subscriptions.map(s => `- ${s.name}: R$ ${s.amount.toFixed(2)}`).join('\n');
+            return { text: `🔁 Suas assinaturas ativas:\n${list}` };
+        }
+
+        return { text: `Desculpe, não entendi. Você pode usar os botões de ação rápida ou digitar um comando.` };
     };
 
     const handleSubmitForm = async () => {
@@ -197,53 +238,13 @@ export default function AIChatWidget() {
         }
     };
 
-    const handleQuickAction = (action) => {
-        if (action === 'advisor') {
-            navigate('/advisor');
-            setIsOpen(false);
-        } else if (action === 'income') {
-            setShowForm('income');
-            addMessage({
-                text: '💰 Ótimo! Preencha os dados da entrada abaixo.',
-                sender: 'ai',
-                timestamp: new Date()
-            });
-        } else if (action === 'expense') {
-            setShowForm('expense');
-            addMessage({
-                text: '💸 Vou ajudá-lo a registrar a saída!',
-                sender: 'ai',
-                timestamp: new Date()
-            });
-        } else if (action === 'goal') {
-            setShowForm('goal');
-            addMessage({
-                text: '🎯 Vamos criar uma meta!',
-                sender: 'ai',
-                timestamp: new Date()
-            });
-        } else if (action === 'recommendations') {
-            const message = `💡 Principais recomendações:\n\n${analysis?.recommendations.slice(0, 2).map((r, i) => `${i + 1}. ${r.title}`).join('\n')}`;
-            addMessage({
-                text: message,
-                sender: 'ai',
-                timestamp: new Date()
-            });
-        }
-    };
-
     const speakMessage = (text) => {
         if ('speechSynthesis' in window) {
-            if (isSpeaking) {
-                window.speechSynthesis.cancel();
-                setIsSpeaking(false);
-            } else {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'pt-BR';
-                utterance.onend = () => setIsSpeaking(false);
-                window.speechSynthesis.speak(utterance);
-                setIsSpeaking(true);
-            }
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'pt-BR';
+            utterance.onend = () => setIsSpeaking(false);
+            window.speechSynthesis.speak(utterance);
+            setIsSpeaking(true);
         }
     };
 
@@ -256,9 +257,27 @@ export default function AIChatWidget() {
         setShowForm(null);
     };
 
-    if (!analysis) {
-        return null;
-    }
+    const handleDeleteMessage = async (messageId) => {
+        // Usa a função centralizada do hook para deletar
+        await deleteMessage(messageId);
+        setMessages(prev => prev.filter(msg => msg.id !== messageId));
+    };
+
+    const formatDateSeparator = (date) => {
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (date.toDateString() === today.toDateString()) return 'Hoje';
+        if (date.toDateString() === yesterday.toDateString()) return 'Ontem';
+        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+    };
+
+    // Variável para controlar a exibição do separador de data
+    let lastDisplayedDate = null;
+
+
+
 
     return (
         <>
@@ -285,13 +304,13 @@ export default function AIChatWidget() {
                         <div className="flex items-center gap-2">
                             <Brain className="w-5 h-5" />
                             <div>
-                                <h3 className="font-bold text-sm">Assistente IA</h3>
+                                <h3 className="font-bold text-sm">FIFI</h3>
                                 <p className="text-xs text-blue-100">{contextualAdvice?.page || 'Online'}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => clearChat()}
+                                onClick={clearChat}
                                 className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
                                 title="Limpar chat"
                             >
@@ -306,67 +325,82 @@ export default function AIChatWidget() {
                         </div>
                     </div>
 
-                    {/* Quick Actions - Show when chat is empty */}
-                    {messages.length === 1 && !showForm && (
-                        <div className="p-4 space-y-2 bg-gradient-to-b from-blue-50 to-transparent">
-                            <p className="text-xs text-slate-600 font-medium">Ações rápidas:</p>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    onClick={() => handleQuickAction('income')}
-                                    className="p-2 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors text-xs font-medium text-slate-700 flex items-center gap-1"
-                                >
-                                    <Plus className="w-3 h-3" />
-                                    Entrada
-                                </button>
-                                <button
-                                    onClick={() => handleQuickAction('expense')}
-                                    className="p-2 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors text-xs font-medium text-slate-700 flex items-center gap-1"
-                                >
-                                    <Plus className="w-3 h-3" />
-                                    Saída
-                                </button>
-                                <button
-                                    onClick={() => handleQuickAction('goal')}
-                                    className="p-2 bg-white border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors text-xs font-medium text-slate-700 flex items-center gap-1"
-                                >
-                                    <Plus className="w-3 h-3" />
-                                    Meta
-                                </button>
-                                <button
-                                    onClick={() => handleQuickAction('advisor')}
-                                    className="p-2 bg-white border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors text-xs font-medium text-slate-700 flex items-center gap-1"
-                                >
-                                    <TrendingUp className="w-3 h-3" />
-                                    Análise
-                                </button>
+                    {/* Quick Actions */}
+                    {!showForm && (
+                        <div className="p-3 border-b border-slate-200 bg-slate-50/50">
+                            <div className="mb-2">
+                                <p className="text-xs font-semibold text-slate-500 mb-1">Registrar:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    <button onClick={() => handleSendMessage(null, 'Registrar entrada')} className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Entrada</button>
+                                    <button onClick={() => handleSendMessage(null, 'Registrar saída')} className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Saída</button>
+                                    <button onClick={() => handleSendMessage(null, 'Criar meta')} className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Meta</button>
+                                    <button onClick={() => handleSendMessage(null, 'Registrar assinatura')} className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Assinatura</button>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs font-semibold text-slate-500 mb-1">Consultar:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    <button onClick={() => handleSendMessage(null, 'Ver saldo')} className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Saldo</button>
+                                    <button onClick={() => handleSendMessage(null, 'Ver moedas')} className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Moedas</button>
+                                    <button onClick={() => handleSendMessage(null, 'Ver relatórios')} className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Relatórios</button>
+                                    <button onClick={() => handleSendMessage(null, 'Ver conquistas')} className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Conquistas</button>
+                                    <button onClick={() => handleSendMessage(null, 'Ver entradas')} className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Entradas</button>
+                                    <button onClick={() => handleSendMessage(null, 'Ver saídas')} className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Saídas</button>
+                                    <button onClick={() => handleSendMessage(null, 'Ver metas')} className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Metas</button>
+                                    <button onClick={() => handleSendMessage(null, 'Ver assinaturas')} className="px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">Assinaturas</button>
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                        {messages.map((msg, idx) => (
-                            <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                <div
-                                    className={`max-w-xs px-4 py-2.5 rounded-lg whitespace-pre-wrap text-sm ${
-                                        msg.sender === 'user'
-                                            ? 'bg-blue-600 text-white rounded-br-none'
-                                            : 'bg-slate-100 text-slate-900 rounded-bl-none'
-                                    }`}
-                                >
-                                    {msg.text}
-                                    {msg.sender === 'ai' && msg.text && (
-                                        <button
-                                            onClick={() => speakMessage(msg.text)}
-                                            className="ml-2 text-xs opacity-70 hover:opacity-100"
-                                            title="Ouvir mensagem"
-                                        >
-                                            <Volume2 className="w-3 h-3 inline" />
-                                        </button>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={chatContainerRef}>
+                        {messages.map((msg) => {
+                            const messageDate = new Date(msg.timestamp || Date.now());
+                            const showDateSeparator = !lastDisplayedDate || messageDate.toDateString() !== lastDisplayedDate.toDateString();
+                            if (showDateSeparator) {
+                                lastDisplayedDate = messageDate;
+                            }
+
+                            return (
+                                <div key={msg.id}>
+                                    {showDateSeparator && (
+                                        <div className="text-center text-xs text-slate-400 my-4">
+                                            {formatDateSeparator(messageDate)}
+                                        </div>
                                     )}
+                                    <div className={`group flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                        {msg.sender === 'user' && (
+                                            <button onClick={() => handleDeleteMessage(msg.id)} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity mb-2">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
+                                        <div
+                                            className={`max-w-xs px-3 py-2 rounded-2xl whitespace-pre-wrap text-sm relative ${
+                                                msg.sender === 'user'
+                                                    ? 'bg-blue-600 text-white rounded-br-lg'
+                                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200 rounded-bl-lg'
+                                            }`}
+                                        >
+                                            {typeof msg.text === 'string' ? msg.text.split('\n').map((line, i) => <p key={i}>{line}</p>) : msg.text}
+                                            <div className={`text-right text-xs mt-1 ${msg.sender === 'user' ? 'text-blue-200' : 'text-slate-400'}`}>
+                                                {messageDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                            {msg.sender === 'ai' && typeof msg.text === 'string' && (
+                                                <button onClick={() => speakMessage(msg.text)} className="absolute -bottom-3 right-2 p-1.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity" title="Ouvir mensagem">
+                                                    <Volume2 size={12} className="text-slate-500 dark:text-slate-300" />
+                                                </button>
+                                            )}
+                                        </div>
+                                        {msg.sender === 'ai' && (
+                                            <button onClick={() => handleDeleteMessage(msg.id)} className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-opacity mb-2">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                         {loading && (
                             <div className="flex justify-start">
                                 <div className="bg-slate-100 text-slate-900 px-4 py-2.5 rounded-lg">
@@ -484,13 +518,18 @@ export default function AIChatWidget() {
 
                     {/* Input */}
                     {!showForm && (
-                        <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-200 flex gap-2">
+                        <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-200 flex items-center gap-2">
                             <input
                                 type="text"
-                                value={inputValue}
+                                value={isRecording ? "Ouvindo..." : inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
                                 placeholder="Pergunte algo..."
                                 className="flex-1 px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-900 placeholder-slate-400"
+                                disabled={isRecording || loading}
+                            />
+                            <VoiceInputButton
+                                onTranscript={(t) => setInputValue(t)}
+                                onRecordingStateChange={setIsRecording}
                             />
                             <button
                                 type="submit"
