@@ -209,7 +209,7 @@ export default function Layout() {
 
             {/* Mobile Menu */}
             {isMobileMenuOpen && (
-                <div className="md:hidden fixed inset-0 bg-white dark:bg-slate-900 z-20 pt-20 px-4 animate-in slide-in-from-top-10 fade-in duration-200 flex flex-col">
+                <div className="md:hidden fixed inset-0 bg-white dark:bg-slate-900 z-20 pt-20 px-4 animate-in slide-in-from-top-10 fade-in duration-200 flex flex-col overflow-y-auto pb-8">
                     {/* Profile Selector for Mobile */}
                     <div className="px-2 mb-4">
                         <div className="relative flex items-center">

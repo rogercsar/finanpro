@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import { Repeat, Plus } from 'lucide-react';
 import { format } from 'date-fns';
+import { Link } from 'react-router-dom'; // Importar o Link
 import SubscriptionForm from '../components/SubscriptionForm';
 
 const currencySymbols = {
@@ -77,7 +78,11 @@ export default function SubscriptionsPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {subscriptions.map(sub => (
-                        <div key={sub.id} className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800">
+                        <Link 
+                            to={`/subscriptions/${sub.id}`} 
+                            key={sub.id} 
+                            className="block bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-all hover:shadow-md hover:border-blue-300 dark:hover:border-blue-500/50"
+                        >
                             <div className="flex justify-between items-start">
                                 <h3 className="font-bold text-slate-900 dark:text-slate-200 capitalize">{sub.name}</h3>
                                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -95,7 +100,7 @@ export default function SubscriptionsPage() {
                                     Próximo pagamento em: {format(new Date(`${sub.next_payment_date}T00:00:00`), 'dd/MM/yyyy')}
                                 </p>
                             )}
-                        </div>
+                        </Link>
                     ))}
                 </div>
             )}
