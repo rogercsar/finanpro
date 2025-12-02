@@ -3,7 +3,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useAlerts } from '../context/AlertsContext';
 import { useNavigate } from 'react-router-dom';
-import { useCurrency } from '../components/CurrencyContext';
+import { useCurrency } from '../context/CurrencyContext';
+import { useProfile } from '../context/ProfileContext';
 import { analyzeFinances } from '../lib/financialAnalyzer';
 import {
     BarChart,
@@ -21,11 +22,13 @@ import {
 } from 'recharts';
 import { Wallet, TrendingUp, TrendingDown, Brain, ChevronRight, Landmark, DollarSign, Euro } from 'lucide-react';
 import BudgetManager from '../components/BudgetManager';
+import SubscriptionSuggestionWidget from './SubscriptionSuggestionWidget';
 
 export default function Dashboard() {
     const { user } = useAuth();
     const { budgets } = useAlerts();
     const { baseCurrency, exchangeRates, loading: currencyLoading } = useCurrency();
+    const { activeProfile, loading: profileLoading } = useProfile();
     const navigate = useNavigate();
 
     // Estado para os totais convertidos para a moeda base
@@ -40,12 +43,14 @@ export default function Dashboard() {
     const [analysis, setAnalysis] = useState(null);
 
     const fetchDashboardData = async () => {
+        if (!activeProfile) return;
         setLoading(true);
         try { // Adicionado 'currency' ao select
             const { data: transactions, error } = await supabase
                 .from('transactions')
                 .select('*')
-                .eq('user_id', user?.id);
+                .eq('user_id', user?.id)
+                .eq('profile_id', activeProfile.id); // FILTRO DE PERFIL
 
             if (error) throw error;
 
@@ -113,7 +118,8 @@ export default function Dashboard() {
             const { data: goalsData } = await supabase
                 .from('goals')
                 .select('*')
-                .eq('user_id', user?.id);
+                .eq('user_id', user?.id)
+                .eq('profile_id', activeProfile.id); // FILTRO DE PERFIL
             
             if (transactions.length > 0) {
                 // Mapeia transações para incluir valores convertidos para a análise
@@ -134,8 +140,8 @@ export default function Dashboard() {
     };
 
     useEffect(() => {
-        if (user) fetchDashboardData();
-    }, [user, baseCurrency, exchangeRates]); // Roda novamente se a moeda base ou taxas mudarem
+        if (user && activeProfile) fetchDashboardData();
+    }, [user, baseCurrency, exchangeRates, activeProfile]); // Roda novamente se o perfil ativo mudar
 
     const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -147,7 +153,7 @@ export default function Dashboard() {
         }).format(value);
     };
 
-    if (loading || currencyLoading) {
+    if (loading || currencyLoading || profileLoading) {
         return <div className="text-center p-8">Carregando dados do dashboard...</div>;
     }
 
@@ -155,9 +161,12 @@ export default function Dashboard() {
         // Removido padding para melhor controle
         <div className="space-y-8">
             <div>
-                <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Dashboard</h2>
+                <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Dashboard ({activeProfile?.name})</h2>
                 <p className="text-slate-500 dark:text-slate-400 mt-1">Visão geral das suas finanças</p>
             </div>
+
+            {/* Widget de Sugestão de Assinaturas */}
+            <SubscriptionSuggestionWidget />
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

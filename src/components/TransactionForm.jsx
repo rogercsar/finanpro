@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { X } from 'lucide-react';
-import { useCurrency } from './CurrencyContext';
+import { useCurrency } from '../context/CurrencyContext';
+import { useProfile } from '../context/ProfileContext';
 
 export default function TransactionForm({ type, onClose, onSuccess, initialData = null }) {
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
+    const { activeProfile } = useProfile();
     const { baseCurrency } = useCurrency();
     const [goals, setGoals] = useState([]);
     const [formData, setFormData] = useState({
@@ -36,8 +38,8 @@ export default function TransactionForm({ type, onClose, onSuccess, initialData 
             setGoals(data || []);
         };
 
-        if (user) fetchGoals();
-    }, [user]);
+        if (user && activeProfile) fetchGoals();
+    }, [user, activeProfile]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -52,6 +54,7 @@ export default function TransactionForm({ type, onClose, onSuccess, initialData 
 
             const dataToSave = {
                 user_id: user.id,
+                profile_id: activeProfile.id,
                 type,
                 amount: parseFloat(formData.amount),
                 category: formData.category,

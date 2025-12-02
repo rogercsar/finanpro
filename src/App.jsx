@@ -20,8 +20,10 @@ import SubscriptionDetailPage from './pages/SubscriptionDetailPage';
 import SharedReportPage from './components/SharedReportPage';
 import AIChatWidget from './components/AIChatWidgetNew';
 import { AuthProvider } from './context/AuthContext'; // Importação duplicada removida e CurrencyProvider adicionado
-import { CurrencyProvider } from './components/CurrencyContext';
+import { CurrencyProvider } from './context/CurrencyContext';
 import CurrencySettingsPage from './components/CurrencySettingsPage'; // Importa a nova página
+import AchievementsPage from './pages/AchievementsPage';
+import { ProfileProvider } from './context/ProfileContext';
 
 
 function AppContent() {
@@ -50,6 +52,7 @@ function AppContent() {
             <Route path="goals/:id" element={<GoalDetailPage />} />
             <Route path="transactions/:id" element={<TransactionDetailPage />} />
             <Route path="subscriptions/:id" element={<SubscriptionDetailPage />} />
+            <Route path="achievements" element={<AchievementsPage />} />
             <Route path="settings/currency" element={<CurrencySettingsPage />} />
           </Route>
           <Route path="/share/report/:token" element={<SharedReportPage />} />
@@ -63,11 +66,13 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <CurrencyProvider>
-        <AlertsProvider>
-          <AppContent />
-        </AlertsProvider>
-      </CurrencyProvider>
+      <ProfileProvider>
+        <CurrencyProvider>
+          <AlertsProvider>
+            <AppContent />
+          </AlertsProvider>
+        </CurrencyProvider>
+      </ProfileProvider>
     </AuthProvider>
   );
 }

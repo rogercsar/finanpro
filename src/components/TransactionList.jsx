@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
+import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
 import { Link } from 'react-router-dom';
 import { Pencil, Trash2, Plus, Search, Upload, FileText } from 'lucide-react';
 import TransactionForm from './TransactionForm';
@@ -15,6 +17,8 @@ const currencySymbols = {
 const TRANSACTIONS_PER_PAGE = 15;
 
 export default function TransactionList({ type }) {
+    const { user } = useAuth();
+    const { activeProfile } = useProfile();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFormOpen, setIsFormOpen] = useState(false);
@@ -25,7 +29,7 @@ export default function TransactionList({ type }) {
     const [showImporter, setShowImporter] = useState(false);
 
     const fetchTransactions = async (isNewSearch = false) => {
-        if (loading && !isNewSearch) return;
+        if ((loading && !isNewSearch) || !activeProfile) return;
         setLoading(true);
 
         const currentPage = isNewSearch ? 0 : page;
@@ -36,6 +40,8 @@ export default function TransactionList({ type }) {
             let query = supabase
                 .from('transactions')
                 .select('*', { count: 'exact' })
+                .eq('user_id', user.id)
+                .eq('profile_id', activeProfile.id)
                 .eq('type', type)
                 .order('date', { ascending: false });
 
@@ -64,15 +70,17 @@ export default function TransactionList({ type }) {
     };
 
     useEffect(() => {
+        if (!type || !activeProfile) return; // GUARDA: Não faz nada se o tipo ou perfil não for definido
         setPage(0);
         setTransactions([]);
         setHasMore(true);
         fetchTransactions(true);
-    }, [type, searchQuery]);
+    }, [type, searchQuery, activeProfile]);
 
     useEffect(() => {
         // Realtime subscription
 
+        if (!type) return; // GUARDA: Não se inscreve se o tipo não for definido
         // Subscribe to realtime changes
         const channel = supabase
             .channel('transactions_list')
@@ -87,7 +95,7 @@ export default function TransactionList({ type }) {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [type]);
+    }, [type, activeProfile]);
     const handleDelete = async (id) => {
         if (!confirm('Tem certeza que deseja excluir?')) return;
         try {

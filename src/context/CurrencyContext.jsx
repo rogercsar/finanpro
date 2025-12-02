@@ -1,28 +1,31 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from './AuthContext';
+import { useProfile } from './ProfileContext'; // Importar o contexto de perfil
 
 const CurrencyContext = createContext();
 
 export const CurrencyProvider = ({ children }) => {
     const { user } = useAuth();
+    const { activeProfile } = useProfile(); // Usar o perfil ativo
     const [baseCurrency, setBaseCurrency] = useState('BRL');
     const [exchangeRates, setExchangeRates] = useState({});
     const [loading, setLoading] = useState(true);
 
     const fetchCurrencySettings = useCallback(async () => {
-        if (!user) return;
+        if (!user || !activeProfile) return; // CORREÇÃO: Adicionado guarda para o perfil ativo
 
         setLoading(true);
         try {
             // 1. Buscar a moeda base do perfil do usuário
+            // CORREÇÃO: Usar o perfil ativo para buscar a moeda base
             const { data: profile, error: profileError } = await supabase
                 .from('profiles')
                 .select('base_currency')
-                .eq('id', user.id)
+                .eq('id', activeProfile.id) // Filtrar pelo ID do perfil ativo
                 .single();
 
-            if (profileError) throw profileError;
+            if (profileError && profileError.code !== 'PGRST116') throw profileError; // Ignora erro se não encontrar perfil
             if (profile) {
                 setBaseCurrency(profile.base_currency);
             }
@@ -46,11 +49,11 @@ export const CurrencyProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [user, activeProfile]); // Adicionar activeProfile como dependência
 
     useEffect(() => {
-        fetchCurrencySettings();
-    }, [fetchCurrencySettings]);
+        if (activeProfile) fetchCurrencySettings();
+    }, [fetchCurrencySettings, activeProfile]);
 
     const value = { baseCurrency, exchangeRates, loading, fetchCurrencySettings };
 

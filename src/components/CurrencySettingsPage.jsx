@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { useCurrency } from './CurrencyContext';
+import { useCurrency } from '../context/CurrencyContext';
 import { DollarSign, Euro, Save } from 'lucide-react';
 
 const currencyOptions = [

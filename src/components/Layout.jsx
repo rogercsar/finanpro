@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
 import { useAIAdvisor } from '../context/AIAdvisorContext';
 import {
     LayoutDashboard,
@@ -15,18 +16,33 @@ import {
     Brain,
     Calculator,
     Repeat,
-    Settings
+    Settings,
+    Trophy,
+    Briefcase,
+    PlusCircle
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useState, useEffect } from 'react';
 import clsx from 'clsx';
+import CreateProfileModal from './CreateProfileModal';
 
 export default function Layout() {
     const { signOut, user } = useAuth();
     const location = useLocation();
     const { analysis } = useAIAdvisor();
+    const { profiles, activeProfile, switchProfile } = useProfile();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isCreateProfileModalOpen, setIsCreateProfileModalOpen] = useState(false);
+
+    const handleProfileChange = (e) => {
+        const selectedValue = e.target.value;
+        if (selectedValue === 'create_new') {
+            setIsCreateProfileModalOpen(true);
+        } else {
+            switchProfile(selectedValue);
+        }
+    };
 
     const handleSignOut = async () => {
         await signOut();
@@ -55,6 +71,7 @@ export default function Layout() {
         { path: '/subscriptions', label: 'Assinaturas', icon: Repeat },
         { path: '/simulator', label: 'Simulador', icon: Calculator },
         { path: '/profile', label: 'Perfil', icon: Wallet },
+        { path: '/achievements', label: 'Conquistas', icon: Trophy },
         { path: '/settings/currency', label: 'Moedas', icon: Settings },
     ];
 
@@ -91,6 +108,27 @@ export default function Layout() {
                     </h1>
                     <div className="flex items-center gap-2">
                         <ThemeToggle />
+                    </div>
+                </div>
+
+                {/* Profile Selector */}
+                <div className="px-6 mb-4">
+                    <div className="relative flex items-center">
+                        <Briefcase className="absolute left-4 w-5 h-5 text-slate-400 dark:text-slate-500 pointer-events-none" />
+                        <select
+                            value={activeProfile?.id || ''}
+                            onChange={handleProfileChange}
+                            className="w-full pl-12 pr-4 py-3.5 border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-slate-900 text-slate-800 dark:text-slate-100 font-semibold appearance-none transition-colors"
+                        >
+                            {profiles.map(profile => (
+                                <option key={profile.id} value={profile.id}>
+                                    {profile.profile_type === 'company' ? '🏢' : '👤'} {profile.name}
+                                </option>
+                            ))}
+                            <option value="create_new" className="font-semibold text-blue-600 bg-slate-100 dark:bg-slate-700">
+                                + Criar novo perfil...
+                            </option>
+                        </select>
                     </div>
                 </div>
 
@@ -209,6 +247,15 @@ export default function Layout() {
                     <Outlet />
                 </div>
             </main>
+
+            {isCreateProfileModalOpen && (
+                <CreateProfileModal 
+                    onClose={() => setIsCreateProfileModalOpen(false)}
+                    onSuccess={(newProfileId) => {
+                        switchProfile(newProfileId); // Troca para o novo perfil e recarrega a página
+                    }}
+                />
+            )}
         </div>
     );
 }

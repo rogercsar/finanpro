@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useProfile } from '../context/ProfileContext';
 import { ArrowLeft, Repeat, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -9,24 +10,29 @@ export default function SubscriptionDetailPage() {
     const [item, setItem] = useState(null);
     const [paymentHistory, setPaymentHistory] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { activeProfile } = useProfile();
 
     useEffect(() => {
         const fetchDetails = async () => {
+            if (!activeProfile) return;
             setLoading(true);
             try {
-                // Fetch recurring expense item
+                // Fetch subscription item
                 const { data: itemData, error: itemError } = await supabase
-                    .from('recurring_expenses')
+                    .from('subscriptions')
                     .select('*')
                     .eq('id', id)
+                    .eq('profile_id', activeProfile.id) // FILTRO DE PERFIL
                     .single();
                 if (itemError) throw itemError;
                 setItem(itemData);
 
                 // Fetch payment history (transactions linked to this item's name)
+                // Esta lógica pode ser frágil, o ideal seria ter um subscription_id na transação.
                 const { data: historyData, error: historyError } = await supabase
                     .from('transactions')
                     .select('*')
+                    .eq('profile_id', activeProfile.id) // FILTRO DE PERFIL
                     .eq('description', `Pagamento: ${itemData.name}`)
                     .order('date', { ascending: false });
                 
@@ -40,8 +46,8 @@ export default function SubscriptionDetailPage() {
             }
         };
 
-        fetchDetails();
-    }, [id]);
+        if (id && activeProfile) fetchDetails();
+    }, [id, activeProfile]);
 
     if (loading) {
         return <div className="text-center p-12 dark:text-slate-400">Carregando detalhes...</div>;

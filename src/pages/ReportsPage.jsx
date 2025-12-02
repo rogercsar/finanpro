@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { useCurrency } from '../components/CurrencyContext';
+import { useCurrency } from '../context/CurrencyContext';
+import { useProfile } from '../context/ProfileContext';
 import {
     PieChart,
     Pie,
@@ -21,6 +22,7 @@ const currentYear = new Date().getFullYear();
 export default function ReportsPage() {
     const { user } = useAuth();
     const { baseCurrency, exchangeRates } = useCurrency();
+    const { activeProfile } = useProfile();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -34,11 +36,13 @@ export default function ReportsPage() {
 
     useEffect(() => {
         const fetchTransactions = async () => {
+            if (!activeProfile) return;
             setLoading(true);
             const { data, error } = await supabase
                 .from('transactions')
                 .select('*')
                 .eq('user_id', user.id)
+                .eq('profile_id', activeProfile.id) // FILTRO DE PERFIL
                 .order('date', { ascending: false });
 
             if (error) {
@@ -49,8 +53,8 @@ export default function ReportsPage() {
             setLoading(false);
         };
 
-        if (user) fetchTransactions();
-    }, [user]);
+        if (user && activeProfile) fetchTransactions();
+    }, [user, activeProfile]);
 
     const filteredTransactions = useMemo(() => {
         return transactions.filter(t => {

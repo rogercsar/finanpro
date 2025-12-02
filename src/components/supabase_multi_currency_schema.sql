@@ -16,7 +16,7 @@ ADD COLUMN IF NOT EXISTS currency VARCHAR(3) NOT NULL DEFAULT 'BRL';
 -- 4. Criar tabela para armazenar as taxas de câmbio definidas pelo usuário
 CREATE TABLE IF NOT EXISTS public.user_exchange_rates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE, -- Coluna user_id
     target_currency VARCHAR(3) NOT NULL,
     rate DECIMAL(18, 8) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
@@ -42,7 +42,15 @@ CREATE INDEX IF NOT EXISTS idx_goals_currency ON public.goals(currency);
 CREATE INDEX IF NOT EXISTS idx_user_exchange_rates_user_id ON public.user_exchange_rates(user_id);
 
 -- 8. Adicionar a nova tabela à publicação do Realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE public.user_exchange_rates;
+-- Tornando o comando idempotente para evitar erros em re-execuções.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND tablename = 'user_exchange_rates'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.user_exchange_rates;
+    END IF;
+END $$;
 
 -- Função auxiliar para converter valores
 -- Esta função busca a taxa definida pelo usuário e converte o valor para a moeda base.
@@ -62,7 +70,7 @@ BEGIN
 
     SELECT rate INTO exchange_rate
     FROM public.user_exchange_rates
-    WHERE user_id = p_user_id AND target_currency = p_currency;
+    WHERE user_id = p_user_id AND target_currency = p_currency; -- Correção da consulta
 
     RETURN p_amount * COALESCE(exchange_rate, 1.0); -- Se não houver taxa, não converte
 END;

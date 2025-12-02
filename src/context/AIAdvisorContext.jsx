@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAlerts } from './AlertsContext';
 import { useAuth } from './AuthContext';
 import { analyzeFinances } from '../lib/financialAnalyzer';
+import { useProfile } from './ProfileContext'; // 1. Importar o useProfile
 import { useLocation } from 'react-router-dom';
 import {
     generateTransactionAlert,
@@ -18,6 +19,7 @@ const AIAdvisorContext = createContext();
 export function AIAdvisorProvider({ children }) {
     const { createAlert } = useAlerts();
     const { user } = useAuth();
+    const { activeProfile } = useProfile(); // 2. Obter o perfil ativo
     const location = useLocation();
     const [analysis, setAnalysis] = useState(null);
     const [previousAnalysis, setPreviousAnalysis] = useState(null);
@@ -29,10 +31,10 @@ export function AIAdvisorProvider({ children }) {
 
     // Fetch analysis dados
     useEffect(() => {
-        if (user) {
+        if (user && activeProfile) { // 3. Garantir que o perfil ativo exista antes de buscar
             fetchAnalysis();
         }
-    }, [user]);
+    }, [user, activeProfile]); // 4. Adicionar activeProfile como dependência
 
     // Fetch achievements
     useEffect(() => {
@@ -88,6 +90,7 @@ export function AIAdvisorProvider({ children }) {
     }, [analysis, previousAnalysis, createAlert]);
 
     const fetchAnalysis = async () => {
+        if (!activeProfile) return; // Guarda de segurança
         setLoading(true);
         try {
             const sixMonthsAgo = new Date();
@@ -98,11 +101,13 @@ export function AIAdvisorProvider({ children }) {
                     .from('transactions')
                     .select('*')
                     .eq('user_id', user?.id)
+                    .eq('profile_id', activeProfile.id)
                     .gte('date', sixMonthsAgo.toISOString().split('T')[0]),
                 supabase
                     .from('goals')
                     .select('*')
                     .eq('user_id', user?.id)
+                    .eq('profile_id', activeProfile.id)
             ]);
 
             if (transData && transData.length > 0) {
@@ -122,47 +127,78 @@ export function AIAdvisorProvider({ children }) {
     const checkAchievements = async (currentAnalysis, transactions, goals) => {
         if (!user) return;
 
-        // Fetch the latest achievements from DB to prevent race conditions
-        const { data: currentAchievements } = await supabase.from('achievements').select('type').eq('user_id', user.id);
-        const existingAchievements = new Set((currentAchievements || []).map(a => a.type));
+        const [
+            { data: currentAchievementsData },
+            { data: allDefinitionsData },
+            { data: budgetsData },
+        ] = await Promise.all([
+            supabase.from('achievements').select('type').eq('user_id', user.id).eq('profile_id', activeProfile.id), // CORREÇÃO
+            supabase.from('achievement_definitions').select('*'),
+            supabase.from('budget_limits').select('id').eq('user_id', user.id).eq('profile_id', activeProfile.id), // CORREÇÃO
+        ]);
+
+        const existingAchievements = new Set((currentAchievementsData || []).map(a => a.type));
+        const allDefinitions = allDefinitionsData || [];
+        const budgets = budgetsData || [];
 
         const newAchievements = [];
 
-        const allAchievements = [
-            { type: 'FIRST_TRANSACTION', name: 'Primeiros Passos', description: 'Você registrou sua primeira transação!', icon: '👟' },
-            { type: 'FIRST_GOAL', name: 'Planejador', description: 'Você criou sua primeira meta financeira!', icon: '🗺️' },
-            { type: 'SAVER_LV1', name: 'Poupador Iniciante', description: 'Atingiu uma taxa de poupança de 10%!', icon: '🌱' },
-            { type: 'SAVER_LV2', name: 'Poupador Mestre', description: 'Atingiu uma taxa de poupança de 20%!', icon: '🌳' },
-            { type: 'GOAL_COMPLETED', name: 'Conquistador', description: 'Você completou sua primeira meta!', icon: '🏆' },
-        ];
-
         // 1. Primeira Transação
         if (transactions.length > 0 && !existingAchievements.has('FIRST_TRANSACTION')) {
-            newAchievements.push(allAchievements.find(a => a.type === 'FIRST_TRANSACTION'));
+            newAchievements.push(allDefinitions.find(a => a.type === 'FIRST_TRANSACTION'));
         }
 
         // 2. Primeira Meta
         if (goals.length > 0 && !existingAchievements.has('FIRST_GOAL')) {
-            newAchievements.push(allAchievements.find(a => a.type === 'FIRST_GOAL'));
+            newAchievements.push(allDefinitions.find(a => a.type === 'FIRST_GOAL'));
         }
 
         // 3. Taxa de Poupança
         if (currentAnalysis.summary.savingsRate >= 10 && !existingAchievements.has('SAVER_LV1')) {
-            newAchievements.push(allAchievements.find(a => a.type === 'SAVER_LV1'));
+            newAchievements.push(allDefinitions.find(a => a.type === 'SAVER_LV1'));
         }
         if (currentAnalysis.summary.savingsRate >= 20 && !existingAchievements.has('SAVER_LV2')) {
-            newAchievements.push(allAchievements.find(a => a.type === 'SAVER_LV2'));
+            newAchievements.push(allDefinitions.find(a => a.type === 'SAVER_LV2'));
         }
 
         // 4. Meta Concluída
         const hasCompletedGoal = goals.some(g => g.current_amount >= g.target_amount);
         if (hasCompletedGoal && !existingAchievements.has('GOAL_COMPLETED')) {
-            newAchievements.push(allAchievements.find(a => a.type === 'GOAL_COMPLETED'));
+            newAchievements.push(allDefinitions.find(a => a.type === 'GOAL_COMPLETED'));
         }
+
+        // 5. Novas Conquistas
+        if (transactions.length >= 10 && !existingAchievements.has('TRANSACTION_LV1')) {
+            newAchievements.push(allDefinitions.find(a => a.type === 'TRANSACTION_LV1'));
+        }
+        if (transactions.length >= 50 && !existingAchievements.has('TRANSACTION_LV2')) {
+            newAchievements.push(allDefinitions.find(a => a.type === 'TRANSACTION_LV2'));
+        }
+        if (budgets.length > 0 && !existingAchievements.has('FIRST_BUDGET')) {
+            newAchievements.push(allDefinitions.find(a => a.type === 'FIRST_BUDGET'));
+        }
+        if (currentAnalysis.healthScore >= 85 && !existingAchievements.has('HEALTHY_FINANCES')) {
+            newAchievements.push(allDefinitions.find(a => a.type === 'HEALTHY_FINANCES'));
+        }
+
+        // 6. Conquistas de Moeda
+        const hasForeignTransaction = transactions.some(t => t.currency !== 'BRL');
+        if (hasForeignTransaction && !existingAchievements.has('FIRST_FOREIGN_TRANSACTION')) {
+            newAchievements.push(allDefinitions.find(a => a.type === 'FIRST_FOREIGN_TRANSACTION'));
+        }
+
+        const usedCurrencies = new Set(transactions.map(t => t.currency));
+        if (usedCurrencies.has('BRL') && usedCurrencies.has('USD') && usedCurrencies.has('EUR') && !existingAchievements.has('MULTI_CURRENCY_MASTER')) {
+            newAchievements.push(allDefinitions.find(a => a.type === 'MULTI_CURRENCY_MASTER'));
+        }
+
+
+
 
         if (newAchievements.length > 0) {
             const achievementsToInsert = newAchievements.map(ach => ({
                 user_id: user.id,
+                profile_id: activeProfile.id, // CORREÇÃO
                 type: ach.type,
                 name: ach.name,
                 description: ach.description,
@@ -197,6 +233,7 @@ export function AIAdvisorProvider({ children }) {
                 .from('transactions')
                 .insert([{
                     user_id: user?.id,
+                    profile_id: activeProfile.id,
                     type, // 'income' or 'expense'
                     amount: parseFloat(amount),
                     category,
@@ -234,6 +271,7 @@ export function AIAdvisorProvider({ children }) {
                 .from('goals')
                 .insert([{
                     user_id: user?.id,
+                    profile_id: activeProfile.id,
                     name,
                     description,
                     target_amount: parseFloat(targetAmount),

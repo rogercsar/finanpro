@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
 import { Link } from 'react-router-dom';
 import { Target, Plus, Pencil, Trash2, Check } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function GoalsPage() {
   const { user } = useAuth();
+  const { activeProfile } = useProfile();
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -21,12 +23,14 @@ export default function GoalsPage() {
   });
 
   const fetchGoals = async () => {
+    if (!activeProfile) return;
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('goals')
         .select('*')
         .eq('user_id', user?.id)
+        .eq('profile_id', activeProfile.id)
         .order('deadline', { ascending: true });
 
       if (error) throw error;
@@ -40,7 +44,7 @@ export default function GoalsPage() {
   };
 
   useEffect(() => {
-    if (user) fetchGoals();
+    if (user && activeProfile) fetchGoals();
     
     const subscription = supabase
       .channel('goals-changes')
@@ -54,7 +58,7 @@ export default function GoalsPage() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [user]);
+  }, [user, activeProfile]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -67,6 +71,7 @@ export default function GoalsPage() {
     try {
       const dataToSave = {
         user_id: user.id,
+        profile_id: activeProfile.id,
         name: form.name,
         description: form.description,
         target_amount: parseFloat(form.target_amount),
