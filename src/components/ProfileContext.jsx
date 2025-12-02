@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 const ProfileContext = createContext();
 
@@ -11,10 +11,7 @@ export const ProfileProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     const fetchProfiles = useCallback(async () => {
-        if (!user) {
-            setLoading(false); // CORREÇÃO: Garante que o carregamento termine se não houver usuário.
-            return;
-        }
+        if (!user) return;
         setLoading(true);
         try {
             const { data, error } = await supabase
