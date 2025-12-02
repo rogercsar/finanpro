@@ -95,10 +95,3 @@ export default function SubscriptionsPage() {
     </div>
   );
 }
-```
-
-### 3. Correção na Página de Conquistas (`AchievementsPage.jsx`)
-
-As conquistas devem ser específicas para cada perfil. Para isso, precisamos adicionar o filtro de perfil ao buscar as conquistas desbloqueadas.
-
-```diff

@@ -209,7 +209,27 @@ export default function Layout() {
 
             {/* Mobile Menu */}
             {isMobileMenuOpen && (
-                <div className="md:hidden fixed inset-0 bg-white dark:bg-slate-900 z-20 pt-20 px-4 animate-in slide-in-from-top-10 fade-in duration-200">
+                <div className="md:hidden fixed inset-0 bg-white dark:bg-slate-900 z-20 pt-20 px-4 animate-in slide-in-from-top-10 fade-in duration-200 flex flex-col">
+                    {/* Profile Selector for Mobile */}
+                    <div className="px-2 mb-4">
+                        <div className="relative flex items-center">
+                            <Briefcase className="absolute left-4 w-5 h-5 text-slate-400 dark:text-slate-500 pointer-events-none" />
+                            <select
+                                value={activeProfile?.id || ''}
+                                onChange={handleProfileChange}
+                                className="w-full pl-12 pr-4 py-3.5 border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-slate-900 text-slate-800 dark:text-slate-100 font-semibold appearance-none transition-colors"
+                            >
+                                {profiles.map(profile => (
+                                    <option key={profile.id} value={profile.id}>
+                                        {profile.profile_type === 'company' ? '🏢' : '👤'} {profile.name}
+                                    </option>
+                                ))}
+                                <option value="create_new" className="font-semibold text-blue-600 bg-slate-100 dark:bg-slate-700">
+                                    + Criar novo perfil...
+                                </option>
+                            </select>
+                        </div>
+                    </div>
                     <nav className="space-y-2">
                         {navItems.map((item) => {
                             const Icon = item.icon;
