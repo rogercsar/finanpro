@@ -14,6 +14,7 @@ export default function SubscriptionForm({ onClose, onSuccess, initialData = nul
         currency: initialData?.currency || 'BRL',
         billing_cycle: initialData?.billing_cycle || 'monthly',
         next_payment_date: initialData?.next_payment_date || '',
+        status: initialData?.status || 'active',
     });
 
     const handleSubmit = async (e) => {
@@ -80,6 +81,14 @@ export default function SubscriptionForm({ onClose, onSuccess, initialData = nul
                                 <option value="EUR">EUR (€)</option>
                             </select>
                         </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+                        <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 bg-transparent rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-slate-900 dark:text-slate-200">
+                            <option value="active">Ativa</option>
+                            <option value="paused">Pausada</option>
+                            <option value="canceled">Cancelada</option>
+                        </select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
